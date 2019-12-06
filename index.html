@@ -3,7 +3,8 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link rel="stylesheet" href="https://unpkg.com/bootstrap@4.4.1/dist/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://unpkg.com/bootstrap@4.4.1/dist/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="">
+    <link rel="stylesheet" href="https://unpkg.com/select2@4.0.5/dist/css/select2.min.css" integrity="sha384-HIipfSYbpCkh5/1V87AWAeR5SUrNiewznrUrtNz1ux4uneLhsAKzv/0FnMbj3m6g" crossorigin=""/>
 
     <title>Who's On First Editor</title>
   </head>
@@ -56,14 +57,19 @@
                 <input type="text" class="form-control" id="edtf-superseded">
                 <small id="edtf-superseded-help" class="form-text text-muted">Indicates the date when a record was superseded by another record.</small>
             </div>
+
+            <div class="form-group" id="alternate-names-placeholder">
+
+            </div>
         </form>
     </div>
 
-    <script src="https://unpkg.com/jquery@3.4.1/dist/jquery.min.js" integrity="sha384-vk5WoKIaW/vJyUAd9n/wmopsmNhiy+L2Z+SBxGYnUkunIxVxAv/UtMOhba/xskxh" crossorigin="anonymous"></script>
-    <script src="https://unpkg.com/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
-    <script src="https://unpkg.com/bootstrap@4.4.1/dist/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/jquery@3.4.1/dist/jquery.min.js" integrity="sha384-vk5WoKIaW/vJyUAd9n/wmopsmNhiy+L2Z+SBxGYnUkunIxVxAv/UtMOhba/xskxh" crossorigin=""></script>
+    <script src="https://unpkg.com/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin=""></script>
+    <script src="https://unpkg.com/bootstrap@4.4.1/dist/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin=""></script>
+    <script src="https://unpkg.com/select2@4.0.5/dist/js/select2.min.js" integrity="sha384-xMX6VHK1HYyCMM8zHAVkLHgg2rIDhN01+z4rI70RV2dwzzVlHP95uaDOc5ds7Pow" crossorigin=""></script>
     <script type="text/javascript">
-        function loadWOFDocument(id) {
+        function loadWofId(id) {
             var idAsString = id.toString();
             var idChunks = [];
             for (let i = 0; i < idAsString.length; i+=3) {
@@ -74,21 +80,73 @@
             var idURLPrefix = idChunks.join("/");
             var url = "https://data.whosonfirst.org/" + idURLPrefix + "/" + idAsString + ".geojson";
 
+            loadWofUrl(url);
+        }
+
+        function loadWofUrl(url) {
             $.getJSON(url, data => {
-                console.log(data.properties);
-                $("#place-name").text(data.properties["wof:name"]);
-                $("#wof-name").val(data.properties["wof:name"]);
-                $("#wof-shortcode").val(data.properties["wof:shortcode"]);
-                $("#mz-is_current").val(data.properties["mz:is_current"]);
-                $("#edtf-cessation").val(data.properties["edtf:cessation"]);
-                $("#edtf-deprecated").val(data.properties["edtf:deprecated"]);
-                $("#edtf-inception").val(data.properties["edtf:inception"]);
-                $("#edtf-superseded").val(data.properties["edtf:superseded"]);
+                populateForm(data);
             })
         }
 
+        function populateForm(data) {
+            $("#place-name").text(data.properties["wof:name"]);
+            $("#wof-name").val(data.properties["wof:name"]);
+            $("#wof-shortcode").val(data.properties["wof:shortcode"]);
+            $("#mz-is_current").val(data.properties["mz:is_current"]);
+            $("#edtf-cessation").val(data.properties["edtf:cessation"]);
+            $("#edtf-deprecated").val(data.properties["edtf:deprecated"]);
+            $("#edtf-inception").val(data.properties["edtf:inception"]);
+            $("#edtf-superseded").val(data.properties["edtf:superseded"]);
+
+            // Parse the alt names properties into a map of lang => {preferred, variant, etc}
+            var alternateNamesByLang = {};
+            Object.keys(data.properties).forEach(k => {
+                if (!k.startsWith("name:")) {
+                    return;
+                }
+
+                let withoutNamePrefix = k.substring(5);
+                let keySplit = withoutNamePrefix.split("_x_");
+                let lang = keySplit[0];
+                let specifier = keySplit[1];
+                let value = data.properties[k];
+
+                if (!alternateNamesByLang.hasOwnProperty(lang)) {
+                    alternateNamesByLang[lang] = {};
+                }
+
+                alternateNamesByLang[lang][specifier] = value;
+            });
+
+            // Add form rows for each language with select2 tag builders for each of preferred, variant, colloquial, etc.
+            Object.keys(alternateNamesByLang).forEach(k => {
+                let properties = alternateNamesByLang[k];
+
+                let preferredSelect = $("<select>").attr("name", "alternate-names-" + k).addClass("alternate-name-select").addClass("form-control");
+                if (properties.preferred) {
+                    properties.preferred.forEach(element => {
+                        preferredSelect.append($("<option>").text(element));
+                    });
+                }
+
+                let rowDiv = $('<div class="row">');
+                rowDiv.append(preferredSelect);
+
+                $("#alternate-names-placeholder").append(rowDiv);
+            });
+            $(".alternate-name-select").select2({
+                tags: true,
+                multiple: true,
+            });
+        }
+
         $(document).ready(function() {
-            loadWOFDocument(101732987);
+            const urlParams = new URLSearchParams(window.location.search);
+            var requestedID = urlParams.get("id");
+            if (requestedID) {
+                loadWofId(parseInt(requestedID));
+            }
         });
     </script>
   </body>
