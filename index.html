@@ -4,7 +4,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="stylesheet" href="https://unpkg.com/bootstrap@4.4.1/dist/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="">
-    <link rel="stylesheet" href="https://unpkg.com/select2@4.0.5/dist/css/select2.min.css" integrity="sha384-HIipfSYbpCkh5/1V87AWAeR5SUrNiewznrUrtNz1ux4uneLhsAKzv/0FnMbj3m6g" crossorigin=""/>
+    <link rel="stylesheet" href="https://unpkg.com/@yaireo/tagify@2.31.6/dist/tagify.css" integrity="sha384-VgQsYt/GtydzxrFEKS4D9VXB6lLQ4cXbFwdorV5HIkxXY8N9e1gJCl36seX6wYYP" crossorigin=""/>
+    <style>
+    </style>
 
     <title>Who's On First Editor</title>
   </head>
@@ -67,7 +69,7 @@
     <script src="https://unpkg.com/jquery@3.4.1/dist/jquery.min.js" integrity="sha384-vk5WoKIaW/vJyUAd9n/wmopsmNhiy+L2Z+SBxGYnUkunIxVxAv/UtMOhba/xskxh" crossorigin=""></script>
     <script src="https://unpkg.com/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin=""></script>
     <script src="https://unpkg.com/bootstrap@4.4.1/dist/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin=""></script>
-    <script src="https://unpkg.com/select2@4.0.5/dist/js/select2.min.js" integrity="sha384-xMX6VHK1HYyCMM8zHAVkLHgg2rIDhN01+z4rI70RV2dwzzVlHP95uaDOc5ds7Pow" crossorigin=""></script>
+    <script src="https://unpkg.com/@yaireo/tagify@2.31.6/dist/jQuery.tagify.min.js" integrity="sha384-oJRpUI+TNL56khhVpM5tcGH6Al77rv1qUUKXqmG0cMe5KtcNzLYfxgdcwunFouVe" crossorigin=""></script>
     <script type="text/javascript">
         function loadWofId(id) {
             var idAsString = id.toString();
@@ -123,21 +125,40 @@
             Object.keys(alternateNamesByLang).forEach(k => {
                 let properties = alternateNamesByLang[k];
 
-                let preferredSelect = $("<select>").attr("name", "alternate-names-" + k).addClass("alternate-name-select").addClass("form-control");
+                let rowDiv = $('<div class="row"><div class="col-md-12">');
+
+                // Language
+                rowDiv.append($('<div class="col-md-2">').text(k));
+
+                let formSide = $('<div class="col-md-10">');
+
+                // Preferred
+                let preferredSelect = $("<input>").attr("name", "alternate-names-preferred-" + k).addClass("alternate-name-select").addClass("form-control");
+                formSide.append($('<div class="form-group">').append(preferredSelect));
+                preferredSelect.tagify();
                 if (properties.preferred) {
-                    properties.preferred.forEach(element => {
-                        preferredSelect.append($("<option>").text(element));
-                    });
+                    preferredSelect.data('tagify').addTags(properties.preferred);
                 }
 
-                let rowDiv = $('<div class="row">');
-                rowDiv.append(preferredSelect);
+                // Variant
+                let variantSelect = $("<input>").attr("name", "alternate-names-variant-" + k).addClass("alternate-name-select").addClass("form-control");
+                formSide.append($('<div class="form-group">').append(variantSelect));
+                variantSelect.tagify();
+                if (properties.variant) {
+                    variantSelect.data('tagify').addTags(properties.variant);
+                }
+
+                // Colloquial
+                let colloquialSelect = $("<input>").attr("name", "alternate-names-colloquial-" + k).addClass("alternate-name-select").addClass("form-control");
+                formSide.append($('<div class="form-group">').append(colloquialSelect));
+                colloquialSelect.tagify();
+                if (properties.colloquial) {
+                    colloquialSelect.data('tagify').addTags(properties.colloquial);
+                }
+
+                rowDiv.append(formSide);
 
                 $("#alternate-names-placeholder").append(rowDiv);
-            });
-            $(".alternate-name-select").select2({
-                tags: true,
-                multiple: true,
             });
         }
 
