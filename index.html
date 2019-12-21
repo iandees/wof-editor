@@ -70,6 +70,7 @@
     <script src="https://unpkg.com/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin=""></script>
     <script src="https://unpkg.com/bootstrap@4.4.1/dist/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin=""></script>
     <script src="https://unpkg.com/@yaireo/tagify@2.31.6/dist/jQuery.tagify.min.js" integrity="sha384-oJRpUI+TNL56khhVpM5tcGH6Al77rv1qUUKXqmG0cMe5KtcNzLYfxgdcwunFouVe" crossorigin=""></script>
+    <script src="languages.js"></script>
     <script type="text/javascript">
         function loadWofId(id) {
             var idAsString = id.toString();
@@ -122,35 +123,48 @@
             });
 
             // Add form rows for each language with select2 tag builders for each of preferred, variant, colloquial, etc.
-            Object.keys(alternateNamesByLang).forEach(k => {
-                let properties = alternateNamesByLang[k];
+            Object.keys(alternateNamesByLang).forEach(lang => {
+                let properties = alternateNamesByLang[lang];
 
-                let rowDiv = $('<div class="row"><div class="col-md-12">');
+                let rowDiv = $('<div class="row">');
 
                 // Language
-                rowDiv.append($('<div class="col-md-2">').text(k));
+                let langExpanded = languages[lang];
+                if (!langExpanded) {
+                    langExpanded = lang;
+                }
+                rowDiv.append($('<div class="col-md-2">').html('<h5>' + langExpanded + '</h5>(<code>' + lang + '</code>)'));
 
                 let formSide = $('<div class="col-md-10">');
 
                 // Preferred
-                let preferredSelect = $("<input>").attr("name", "alternate-names-preferred-" + k).addClass("alternate-name-select").addClass("form-control");
-                formSide.append($('<div class="form-group">').append(preferredSelect));
+                let preferredSelect = $("<input>").attr("name", "alternate-names-preferred-" + lang).addClass("alternate-name-select").addClass("form-control");
+                let preferredFormGroup = $('<div class="form-group row">');
+                preferredFormGroup.append($('<label class="col-sm-2 col-form-label">').text("Preferred"));
+                preferredFormGroup.append($('<div class="col-sm-10">').append(preferredSelect));
+                formSide.append(preferredFormGroup);
                 preferredSelect.tagify();
                 if (properties.preferred) {
                     preferredSelect.data('tagify').addTags(properties.preferred);
                 }
 
                 // Variant
-                let variantSelect = $("<input>").attr("name", "alternate-names-variant-" + k).addClass("alternate-name-select").addClass("form-control");
-                formSide.append($('<div class="form-group">').append(variantSelect));
+                let variantSelect = $("<input>").attr("name", "alternate-names-variant-" + lang).addClass("alternate-name-select").addClass("form-control");
+                let variantFormGroup = $('<div class="form-group row">');
+                variantFormGroup.append($('<label class="col-sm-2 col-form-label">').text("Variant"));
+                variantFormGroup.append($('<div class="col-sm-10">').append(variantSelect));
+                formSide.append(variantFormGroup);
                 variantSelect.tagify();
                 if (properties.variant) {
                     variantSelect.data('tagify').addTags(properties.variant);
                 }
 
                 // Colloquial
-                let colloquialSelect = $("<input>").attr("name", "alternate-names-colloquial-" + k).addClass("alternate-name-select").addClass("form-control");
-                formSide.append($('<div class="form-group">').append(colloquialSelect));
+                let colloquialSelect = $("<input>").attr("name", "alternate-names-colloquial-" + lang).addClass("alternate-name-select").addClass("form-control");
+                let colloquialFormGroup = $('<div class="form-group row">');
+                colloquialFormGroup.append($('<label class="col-sm-2 col-form-label">').text("Colloquial"));
+                colloquialFormGroup.append($('<div class="col-sm-10">').append(colloquialSelect));
+                formSide.append(colloquialFormGroup);
                 colloquialSelect.tagify();
                 if (properties.colloquial) {
                     colloquialSelect.data('tagify').addTags(properties.colloquial);
