@@ -35,6 +35,18 @@
                 <input type="text" class="form-control" id="mz-is_current">
                 <small id="mz-is_current-help" class="form-text text-muted"></small>
             </div>
+            <!-- https://github.com/whosonfirst/whosonfirst-properties/blob/master/properties/mz/is_funky.json -->
+            <div class="form-group">
+                <label for="mz-is_funky">Disabled</label>&nbsp;<small>(<code>mz:is_funky</code>)</small>
+                <input type="text" class="form-control" id="mz-is_funky">
+                <small id="mz-is_funky-help" class="form-text text-muted">Used when Mapzen suspects the record is bad or inappropriate but additional confirmation is needed before the feature is deprecated. Records with a 1 value are recommended to be hidden from map display and search unless explicitly asked for by name.</small>
+            </div>
+            <!-- https://github.com/whosonfirst/whosonfirst-properties/blob/master/properties/mz/hierarchy_label.json -->
+            <div class="form-group">
+                <label for="mz-hierarchy_label">Include in Hierarchy Label</label>&nbsp;<small>(<code>mz:hierarchy_label</code>)</small>
+                <input type="text" class="form-control" id="mz-hierarchy_label">
+                <small id="mz-hierarchy_label-help" class="form-text text-muted">Used when generating place labels in geocoding software, like Pelias; this property defaults to True unless it is set to 0 manually. When Pelias decorates an address string, the hierarchy_label property is used to determine what is included in that address string.</small>
+            </div>
             <!-- https://github.com/whosonfirst/whosonfirst-properties/blob/master/properties/edtf/cessation.json -->
             <div class="form-group">
                 <label for="edtf-cessation">Cessation</label>&nbsp;<small>(<code>edtf:cessation</code>)</small>
@@ -61,7 +73,6 @@
             </div>
 
             <div class="form-group" id="alternate-names-placeholder">
-
             </div>
         </form>
     </div>
@@ -115,6 +126,8 @@
             $("#wof-name").val(data.properties["wof:name"]);
             $("#wof-shortcode").val(data.properties["wof:shortcode"]);
             $("#mz-is_current").val(data.properties["mz:is_current"]);
+            $("#mz-is_funky").val(data.properties["mz:is_funky"]);
+            $("#mz-hierarchy_label").val(data.properties["mz:hierarchy_label"]);
             $("#edtf-cessation").val(data.properties["edtf:cessation"]);
             $("#edtf-deprecated").val(data.properties["edtf:deprecated"]);
             $("#edtf-inception").val(data.properties["edtf:inception"]);
