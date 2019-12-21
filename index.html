@@ -92,6 +92,24 @@
             })
         }
 
+        function buildAlternateTagify(prop, type, lang, displayName, values) {
+            let formGroup = $('<div class="form-group row">');
+            let inputSelect = $("<input>").
+                attr("name", prop + "-" + type + "-" + lang).
+                data("type", type).
+                data("lang", lang).
+                addClass(prop + "-select").
+                addClass("form-control");
+            formGroup.append($('<label class="col-sm-2 col-form-label">').text(displayName));
+            formGroup.append($('<div class="col-sm-10">').append(inputSelect));
+            inputSelect.tagify();
+            if (values) {
+                inputSelect.data('tagify').addTags(values);
+            }
+
+            return formGroup;
+        }
+
         function populateForm(data) {
             $("#place-name").text(data.properties["wof:name"]);
             $("#wof-name").val(data.properties["wof:name"]);
@@ -137,38 +155,9 @@
 
                 let formSide = $('<div class="col-md-10">');
 
-                // Preferred
-                let preferredSelect = $("<input>").attr("name", "alternate-names-preferred-" + lang).addClass("alternate-name-select").addClass("form-control");
-                let preferredFormGroup = $('<div class="form-group row">');
-                preferredFormGroup.append($('<label class="col-sm-2 col-form-label">').text("Preferred"));
-                preferredFormGroup.append($('<div class="col-sm-10">').append(preferredSelect));
-                formSide.append(preferredFormGroup);
-                preferredSelect.tagify();
-                if (properties.preferred) {
-                    preferredSelect.data('tagify').addTags(properties.preferred);
-                }
-
-                // Variant
-                let variantSelect = $("<input>").attr("name", "alternate-names-variant-" + lang).addClass("alternate-name-select").addClass("form-control");
-                let variantFormGroup = $('<div class="form-group row">');
-                variantFormGroup.append($('<label class="col-sm-2 col-form-label">').text("Variant"));
-                variantFormGroup.append($('<div class="col-sm-10">').append(variantSelect));
-                formSide.append(variantFormGroup);
-                variantSelect.tagify();
-                if (properties.variant) {
-                    variantSelect.data('tagify').addTags(properties.variant);
-                }
-
-                // Colloquial
-                let colloquialSelect = $("<input>").attr("name", "alternate-names-colloquial-" + lang).addClass("alternate-name-select").addClass("form-control");
-                let colloquialFormGroup = $('<div class="form-group row">');
-                colloquialFormGroup.append($('<label class="col-sm-2 col-form-label">').text("Colloquial"));
-                colloquialFormGroup.append($('<div class="col-sm-10">').append(colloquialSelect));
-                formSide.append(colloquialFormGroup);
-                colloquialSelect.tagify();
-                if (properties.colloquial) {
-                    colloquialSelect.data('tagify').addTags(properties.colloquial);
-                }
+                formSide.append(buildAlternateTagify("alternate-names", "preferred", lang, "Preferred", properties.preferred));
+                formSide.append(buildAlternateTagify("alternate-names", "variant", lang, "Variant", properties.variant));
+                formSide.append(buildAlternateTagify("alternate-names", "colloquial", lang, "Colloquial", properties.colloquial));
 
                 rowDiv.append(formSide);
 
