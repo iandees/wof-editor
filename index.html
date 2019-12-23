@@ -72,6 +72,11 @@
                 <small id="edtf-superseded-help" class="form-text text-muted">Indicates the date when a record was superseded by another record.</small>
             </div>
 
+            <h3>Alternate Names</h3>
+            <div class="form-group">
+                <label for="alternate-names-selected">Filter</label>
+                <input type="text" class="form-control" id="alternate-names-selected">
+            </div>
             <div class="form-group" id="alternate-names-placeholder">
             </div>
         </form>
@@ -155,11 +160,13 @@
 
             // Add form rows for each language with select2 tag builders for each of preferred, variant, colloquial, etc.
             Object.keys(alternateNamesByLang).forEach(lang => {
-                let properties = alternateNamesByLang[lang];
-
                 let rowDiv = $('<div class="row">');
 
-                // Language
+                let properties = alternateNamesByLang[lang];
+
+                // Keep track of the div we're creating so we can show/hide it later
+                alternateNamesByLang[lang]['rowDiv'] = rowDiv;
+
                 let langExpanded = languages[lang];
                 if (!langExpanded) {
                     langExpanded = lang;
@@ -173,9 +180,31 @@
                 formSide.append(buildAlternateTagify("alternate-names", "colloquial", lang, "Colloquial", properties.colloquial));
 
                 rowDiv.append(formSide);
+                rowDiv.hide();
 
                 $("#alternate-names-placeholder").append(rowDiv);
             });
+
+            // Set up a filter to pick which languages to show
+            $("#alternate-names-selected").tagify({
+                enforceWhitelist: true,
+                whitelist: Object.keys(alternateNamesByLang),
+                dropdown: {
+                    enabled: 0,
+                }
+            }).on("add", function(e, tag) {
+                let langData = alternateNamesByLang[tag.data.value];
+                if (langData) {
+                    $(langData.rowDiv).show();
+                }
+            }).on("remove", function(e, tag) {
+                let langData = alternateNamesByLang[tag.data.value];
+                if (langData) {
+                    $(langData.rowDiv).hide();
+                }
+            });
+
+            $("#alternate-names-selected").data("tagify").addTags("eng");
         }
 
         $(document).ready(function() {
