@@ -181,8 +181,11 @@
         $(document).ready(function() {
             const urlParams = new URLSearchParams(window.location.search);
             var requestedID = urlParams.get("id");
+            var requestedURL = urlParams.get("url");
             if (requestedID) {
                 loadWofId(parseInt(requestedID));
+            } else if (requestedURL) {
+                loadWofUrl(requestedURL);
             }
         });
     </script>
