@@ -1,9 +1,12 @@
 const languages = {
+    "ara": "Arabic",
     "ara_AE": "Arabic (UAE)",
+    "ben": "Bengali",
     "ben_IN": "Bengali (India)",
     "ben_BD": "Bengali (Bangladesh)",
     "dan": "Danish",
     "ell": "Greek",
+    "eng": "English",
     "eng_GB": "English (UK)",
     "eng_US": "English (US)",
     "fin": "Finnish",
@@ -18,6 +21,7 @@ const languages = {
     "nld": "Dutch",
     "nor": "Norwegian",
     "pol": "Polish",
+    "por": "Portuguese",
     "por_BR": "Portuguese (Brazil)",
     "por_PT": "Portuguese (Portugal)",
     "ron": "Romanian",
@@ -31,6 +35,7 @@ const languages = {
     "tel": "Telugu",
     "tha": "Thai",
     "tur": "Turkish",
+    "zho": "Chinese",
     "zho_CN": "Chinese (China)",
     "zho_TW": "Chinese (Taiwan)"
 };
