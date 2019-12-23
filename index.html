@@ -158,7 +158,7 @@
                 alternateNamesByLang[lang][specifier] = value;
             });
 
-            // Add form rows for each language with select2 tag builders for each of preferred, variant, colloquial, etc.
+            // Add form rows for each language with tagify tag builders for each of preferred, variant, colloquial, etc.
             Object.keys(alternateNamesByLang).forEach(lang => {
                 let rowDiv = $('<div class="row">');
 
@@ -204,6 +204,7 @@
                 }
             });
 
+            // Default to showing English only
             $("#alternate-names-selected").data("tagify").addTags("eng");
         }
 
