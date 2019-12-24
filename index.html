@@ -126,12 +126,20 @@
                 <small id="iso-country-help" class="form-text text-muted">The two-letter country code from ISO 3166-1.</small>
             </div>
 
-            <h3>Alternate Names</h3>
+            <h4>Localized Names</h4>
             <div class="form-group">
                 <label for="alternate-names-selected">Filter</label>
                 <input type="text" class="form-control" id="alternate-names-selected">
             </div>
             <div class="form-group" id="alternate-names-placeholder">
+            </div>
+
+            <h4>Localized Labels</h4>
+            <div class="form-group">
+                <label for="localized-labels-selected">Filter</label>
+                <input type="text" class="form-control" id="localized-labels-selected">
+            </div>
+            <div class="form-group" id="localized-labels-placeholder">
             </div>
         </form>
     </div>
@@ -181,6 +189,30 @@
             return formGroup;
         }
 
+        function parsePrefixMap(props, prefix) {
+            var output = {};
+
+            Object.keys(props).forEach(k => {
+                if (!k.startsWith(prefix)) {
+                    return;
+                }
+
+                let withoutNamePrefix = k.substring(prefix.length);
+                let keySplit = withoutNamePrefix.split("_x_");
+                let lang = keySplit[0];
+                let specifier = keySplit[1];
+                let value = props[k];
+
+                if (!output.hasOwnProperty(lang)) {
+                    output[lang] = {};
+                }
+
+                output[lang][specifier] = value;
+            });
+
+            return output;
+        }
+
         function populateForm(data) {
             $("#place-name").text(data.properties["wof:name"]);
 
@@ -216,24 +248,7 @@
             $('input.wof-input[data-wof-type="list"]').tagify();
 
             // Parse the alt names properties into a map of lang => {preferred, variant, etc}
-            var alternateNamesByLang = {};
-            Object.keys(data.properties).forEach(k => {
-                if (!k.startsWith("name:")) {
-                    return;
-                }
-
-                let withoutNamePrefix = k.substring(5);
-                let keySplit = withoutNamePrefix.split("_x_");
-                let lang = keySplit[0];
-                let specifier = keySplit[1];
-                let value = data.properties[k];
-
-                if (!alternateNamesByLang.hasOwnProperty(lang)) {
-                    alternateNamesByLang[lang] = {};
-                }
-
-                alternateNamesByLang[lang][specifier] = value;
-            });
+            var alternateNamesByLang = parsePrefixMap(data.properties, "name:");
 
             // Add form rows for each language with tagify tag builders for each of preferred, variant, colloquial, etc.
             Object.keys(alternateNamesByLang).forEach(lang => {
@@ -284,6 +299,70 @@
 
             // Default to showing English only
             $("#alternate-names-selected").data("tagify").addTags("eng");
+
+            // Parse the labels properties into a map of lang => {preferred, variant, etc}
+            var localizedLabelsByLang = parsePrefixMap(data.properties, "label:");
+
+            // Add form rows for each language with tagify tag builders for each of preferred, variant, etc.
+            Object.keys(localizedLabelsByLang).forEach(lang => {
+                let rowDiv = $('<div class="row">');
+
+                let properties = localizedLabelsByLang[lang];
+
+                // Keep track of the div we're creating so we can show/hide it later
+                localizedLabelsByLang[lang]['rowDiv'] = rowDiv;
+
+                let langExpanded = languages[lang];
+                if (!langExpanded) {
+                    langExpanded = lang;
+                }
+                rowDiv.append($('<div class="col-md-2">').html('<h5>' + langExpanded + '</h5>(<code>' + lang + '</code>)'));
+
+                let formSide = $('<div class="col-md-10">');
+
+                formSide.append(buildAlternateTagify("localized-labels", "colloquial", lang, "Colloquial", properties.colloquial));
+                formSide.append(buildAlternateTagify("localized-labels", "colloquial_abbreviation", lang, "Colloquial Abbrev.", properties.colloquial_abbreviation));
+                formSide.append(buildAlternateTagify("localized-labels", "historical", lang, "Historical", properties.historical));
+                formSide.append(buildAlternateTagify("localized-labels", "preferred", lang, "Preferred", properties.preferred));
+                formSide.append(buildAlternateTagify("localized-labels", "preferred_abbreviation", lang, "Preferred Abbrev.", properties.preferred_abbreviation));
+                formSide.append(buildAlternateTagify("localized-labels", "preferred_disambiguation", lang, "Preferred Disambiguation", properties.preferred_disambiguation));
+                formSide.append(buildAlternateTagify("localized-labels", "preferred_longname", lang, "Preferred Longname", properties.preferred_longname));
+                formSide.append(buildAlternateTagify("localized-labels", "preferred_placetype", lang, "Preferred Placetype", properties.preferred_placetype));
+                formSide.append(buildAlternateTagify("localized-labels", "preferred_shortcode", lang, "Preferred Shortcode", properties.preferred_shortcode));
+                formSide.append(buildAlternateTagify("localized-labels", "unknown", lang, "Unknown", properties.unknown));
+                formSide.append(buildAlternateTagify("localized-labels", "variant", lang, "Variant", properties.variant));
+                formSide.append(buildAlternateTagify("localized-labels", "variant_abbreviation", lang, "Variant Abbrev.", properties.variant_abbbreviation));
+                formSide.append(buildAlternateTagify("localized-labels", "variant_disambiguation", lang, "Variant Disambiguation", properties.variant_disambiguation));
+                formSide.append(buildAlternateTagify("localized-labels", "variant_longname", lang, "Variant Longname", properties.variant_longname));
+                formSide.append(buildAlternateTagify("localized-labels", "variant_shortcode", lang, "Variant Shortcode", properties.variant_shortcode));
+
+                rowDiv.append(formSide);
+                rowDiv.hide();
+
+                $("#localized-labels-placeholder").append(rowDiv);
+            });
+
+            // Set up a filter to pick which languages to show
+            $("#localized-labels-selected").tagify({
+                enforceWhitelist: true,
+                whitelist: Object.keys(localizedLabelsByLang),
+                dropdown: {
+                    enabled: 0,
+                }
+            }).on("add", function(e, tag) {
+                let langData = localizedLabelsByLang[tag.data.value];
+                if (langData) {
+                    $(langData.rowDiv).show();
+                }
+            }).on("remove", function(e, tag) {
+                let langData = localizedLabelsByLang[tag.data.value];
+                if (langData) {
+                    $(langData.rowDiv).hide();
+                }
+            });
+
+            // Default to showing English only
+            $("#localized-labels-selected").data("tagify").addTags("eng");
         }
 
         $(document).ready(function() {
