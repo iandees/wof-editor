@@ -181,14 +181,21 @@
                 data.properties[propertyName] = formValue;
 
                 let regex = $(this).data("wof-validation-regex");
-                if (formValue && regex) {
-                    var matched = formValue.match(regex);
+                let required = $(this).attr("required");
+                if (regex) {
+                    if (formValue || required) {
+                        var matched = formValue.match(regex);
 
-                    if (!matched) {
-                        $(this).addClass("is-invalid");
-                        $(this).removeClass("is-valid");
+                        if (!matched) {
+                            $(this).addClass("is-invalid");
+                            $(this).removeClass("is-valid");
+                        } else {
+                            $(this).addClass("is-valid");
+                            $(this).removeClass("is-invalid");
+                        }
                     } else {
-                        $(this).addClass("is-valid");
+                        // Remove valid/invalid if the value is not required and blank
+                        $(this).removeClass("is-valid");
                         $(this).removeClass("is-invalid");
                     }
                 }
