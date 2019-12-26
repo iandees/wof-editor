@@ -141,6 +141,10 @@
             </div>
             <div class="form-group" id="localized-labels-placeholder">
             </div>
+
+            <div class="form-group">
+                <button type="button" class="btn btn-primary" id="export-button">Export</button>
+            </div>
         </form>
     </div>
 
@@ -211,6 +215,17 @@
             });
 
             return output;
+        }
+
+        function doExport(data) {
+            var w = window.open();
+            $(w.document.body).html('<pre>{\n' +
+                '  "id": ' + JSON.stringify(data.id) + ',\n' +
+                '  "type": ' + JSON.stringify(data.type) + ',\n' +
+                '  "properties": ' + JSON.stringify(data.properties, null, 2) + ',\n' +
+                '  "geometry": ' + JSON.stringify(data.geometry, null) + '\n' +
+                '}</pre>'
+            );
         }
 
         function populateForm(data) {
@@ -363,6 +378,12 @@
 
             // Default to showing English only
             $("#localized-labels-selected").data("tagify").addTags("eng");
+
+            // Attach the export button
+            $("#export-button").on("click", function(e) {
+                e.preventDefault();
+                doExport(data);
+            });
         }
 
         $(document).ready(function() {
