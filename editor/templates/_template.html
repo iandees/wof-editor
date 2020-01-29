@@ -1,0 +1,22 @@
+{%- extends "bootstrap/base.html" %}
+{% import "bootstrap/utils.html" as util %}
+
+{%- block head %}
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+{{ super() }}
+{%- endblock %}
+
+{%- block title %}Who's On First Editor{%- endblock %}
+
+{%- block body %}
+<div class="container">
+{{ super() }}
+</div>
+{%- endblock %}
+
+{%- block content %}
+{{ util.flashed_messages(dismissible=True, container=False) }}
+{%- block page %}{% endblock %}
+{%- endblock %}

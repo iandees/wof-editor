@@ -1,0 +1,21 @@
+{%- extends "_template.html" %}
+
+{%- block title %}{{ super() }} : Exportify Upload{%- endblock %}
+
+{%- block page %}
+<h1>Exportify</h1>
+
+<form method="POST" enctype="multipart/form-data">
+    <div class="form-group">
+        <label for="exportify-upload">File input</label>
+        <input type="file" name="input-file" id="exportify-upload">
+        <p class="help-block">Upload a file to be exportified.</p>
+    </div>
+    <div class="form-group">
+        <label for="exportify-textarea">Text area</label>
+        <textarea name="input-text" class="form-control" rows="5"></textarea>
+        <p class="help-block">Copy and paste text to be exportified.</p>
+    </div>
+    <button type="submit" class="btn btn-default">Submit</button>
+</form>
+{%- endblock %}
