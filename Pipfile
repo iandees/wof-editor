@@ -8,6 +8,9 @@ flake8 = "*"
 black = "*"
 
 [packages]
+arrow = "*"
+atomicwrites = "*"
+edtf = "*"
 flask = "*"
 flask-bootstrap = "*"
 geojson = "*"
@@ -20,6 +23,8 @@ mapzen-whosonfirst-sources = {editable = true,git = "https://github.com/iandees/
 mapzen-whosonfirst-uri = {editable = true,git = "https://github.com/iandees/py-mapzen-whosonfirst-uri.git",ref = "py3"}
 mapzen-whosonfirst-utils = {editable = true,git = "https://github.com/iandees/py-mapzen-whosonfirst-utils.git",ref = "py3"}
 mapzen-whosonfirst-validator = {editable = true,git = "https://github.com/iandees/py-mapzen-whosonfirst-validator.git",ref = "py3"}
+requests = "*"
+shapely = "*"
 
 [requires]
 python_version = "3"

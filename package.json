@@ -1,0 +1,25 @@
+{
+  "name": "whosonfirst-editor",
+  "version": "1.0.0",
+  "main": "languages.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/iandees/wof-editor.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/iandees/wof-editor/issues"
+  },
+  "homepage": "https://github.com/iandees/wof-editor#readme",
+  "devDependencies": {
+    "serverless-python-requirements": "^5.0.1",
+    "serverless-wsgi": "^1.7.4"
+  },
+  "dependencies": {},
+  "description": ""
+}

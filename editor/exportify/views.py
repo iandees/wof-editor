@@ -39,8 +39,8 @@ def upload():
 
         try:
             data = json.loads(content)
-        except ValueError:
-            flash("Content had invalid JSON")
+        except json.decoder.JSONDecodeError as e:
+            flash("Content had invalid JSON: %s" % str(e))
             return redirect(request.url)
 
         if data.get("type") == "FeatureCollection":
