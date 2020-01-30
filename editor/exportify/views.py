@@ -45,23 +45,23 @@ def upload():
             return redirect(request.url)
 
         if data.get("type") == "FeatureCollection":
-            features = data.get("features")
+            flash("Exportify only supports GeoJSON Features (not FeatureCollection)")
+            return redirect(request.url)
         elif data.get("type") == "Feature":
-            features = [data]
+            feature = data
         else:
             flash("Content was not a GeoJSON Feature or FeatureCollection")
             return redirect(request.url)
 
-        for feature in features:
-            validator = mapzen.whosonfirst.validator.validator()
-            report = validator.validate_feature(feature)
+        validator = mapzen.whosonfirst.validator.validator()
+        report = validator.validate_feature(feature)
 
-            if not report.ok():
-                report_output = io.StringIO()
-                report.print_report(report_output)
-                report_output.seek(0)
+        if not report.ok():
+            report_output = io.StringIO()
+            report.print_report(report_output)
+            report_output.seek(0)
 
-                return report_output, 400
+            return report_output, 400
 
         exporter = mapzen.whosonfirst.export.string()
         result = exporter.export_feature(feature)
