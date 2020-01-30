@@ -1,0 +1,3 @@
+GITHUB_APP_ID: "sample_app_id"
+GITHUB_APP_SECRET: "sample_app_secret"
+SECRET_KEY: "abc123"

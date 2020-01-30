@@ -25,6 +25,8 @@ mapzen-whosonfirst-utils = {editable = true,git = "https://github.com/iandees/py
 mapzen-whosonfirst-validator = {editable = true,git = "https://github.com/iandees/py-mapzen-whosonfirst-validator.git",ref = "py3"}
 requests = "*"
 shapely = "*"
+rauth = "*"
+flask-login = "*"
 
 [requires]
 python_version = "3"

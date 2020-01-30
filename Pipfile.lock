@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "63c0fcf519a2cdc5fcf72ae1ba9ae2395623b720980b73fd5fa6a248dd69d592"
+            "sha256": "fe8fd4e435f787bdf06302fc4ff608ceb5fd6f1ea0540df1c93830294e94d5d8"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -82,6 +82,13 @@
             ],
             "index": "pypi",
             "version": "==3.3.7.1"
+        },
+        "flask-login": {
+            "hashes": [
+                "sha256:c815c1ac7b3e35e2081685e389a665f2c74d7e077cb93cecabaea352da4752ec"
+            ],
+            "index": "pypi",
+            "version": "==0.4.1"
         },
         "geojson": {
             "hashes": [
@@ -211,6 +218,14 @@
                 "sha256:75bb3f31ea686f1197762692a9ee6a7550b59fc6ca3a1f4b5d7e32fb98e2da2a"
             ],
             "version": "==2.8.1"
+        },
+        "rauth": {
+            "hashes": [
+                "sha256:524cdbc1c28560eacfc9a9d40c59525eb8d00fdf07fbad86107ea24411477b0a",
+                "sha256:b18590fbd77bc3d871936bbdb851377d1b0c08e337b219c303f8fc2b5a42ef2d"
+            ],
+            "index": "pypi",
+            "version": "==0.7.3"
         },
         "requests": {
             "hashes": [

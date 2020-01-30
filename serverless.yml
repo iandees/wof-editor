@@ -16,6 +16,10 @@ provider:
   runtime: python3.6
   stage: dev
   region: us-east-1
+  environment:
+    GITHUB_APP_ID: ${file(./config.${self:provider.stage}.yaml):GITHUB_APP_ID}
+    GITHUB_APP_SECRET: ${file(./config.${self:provider.stage}.yaml):GITHUB_APP_SECRET}
+    SECRET_KEY: ${file(./config.${self:provider.stage}.yaml):SECRET_KEY}
 
 functions:
   app:
