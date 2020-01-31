@@ -4,8 +4,6 @@ from flask import (
     url_for,
     request,
     redirect,
-    session,
-    json,
 )
 
 
@@ -22,7 +20,6 @@ class OAuthSignIn(object):
         pass
 
     def get_callback_url(self):
-        print("get_callback_url; provider=%s" % self.provider_name)
         return url_for('auth.oauth_callback',
                        provider=self.provider_name,
                        _external=True,
@@ -66,9 +63,8 @@ class GithubSignIn(OAuthSignIn):
         )
 
     def authorize(self):
-        print("In authorize()")
         return redirect(self.service.get_authorize_url(
-            scope='user:email',
+            scope='user:email public_repo',
             response_type='code',
             redirect_uri=self.get_callback_url())
         )
@@ -77,7 +73,6 @@ class GithubSignIn(OAuthSignIn):
         if 'code' not in request.args:
             return None, None, None
 
-        print("In callback()")
         oauth_session = self.service.get_auth_session(
             data={
                 'code': request.args['code'],
