@@ -1,0 +1,16 @@
+{%- extends "_template.html" %}
+
+{%- block title %}{{ super() }} : Edit Place{%- endblock %}
+
+{%- block page %}
+<form method="POST">
+    <div class="form-group">
+        <label for="wof-name">Name</label>&nbsp;<small>(<code>wof:name</code>)</small>
+        <input type="text" name="name" class="form-control wof-input" data-wof-property-name="wof:name">
+        <small id="wof-name-help" class="form-text text-muted">An English UTF-7 transliterated representation of the name. (Some features have UTF-8 names.)</small>
+    </div>
+    <div class="form-group">
+        <button type="submit" class="btn btn-primary" id="export-button">Export</button>
+    </div>
+</form>
+{%- endblock %}
