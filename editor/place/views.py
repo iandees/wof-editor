@@ -16,6 +16,76 @@ from flask import (
 )
 
 
+spec_expansion = {
+    "colloquial_abbreviation": "Colloquial Abbrev.",
+    "colloquial": "Colloquial",
+    "historical": "Historical",
+    "preferred_abbreviation": "Preferred Abbrev.",
+    "preferred_disambiguation": "Preferred Disambiguation",
+    "preferred_longname": "Preferred Longname",
+    "preferred_placetype": "Preferred Placetype",
+    "preferred_shortcode": "Preferred Shortcode",
+    "preferred": "Preferred",
+    "unknown": "Unknown",
+    "variant_abbreviation": "Variant Abbrev.",
+    "variant_disambiguation": "Variant Disambiguation",
+    "variant_longname": "Variant Longname",
+    "variant_shortcode": "Variant Shortcode",
+    "variant": "Variant",
+}
+lang_expansion = {
+    'ara': 'Arabic',
+    'ara_AE': 'Arabic (UAE)',
+    'ben': 'Bengali',
+    'ben_IN': 'Bengali (India)',
+    'ben_BD': 'Bengali (Bangladesh)',
+    'dan': 'Danish',
+    'ell': 'Greek',
+    'eng': 'English',
+    'eng_GB': 'English (UK)',
+    'eng_US': 'English (US)',
+    'fin': 'Finnish',
+    'fra': 'French',
+    'ger': 'German',
+    'ind': 'Indonesian',
+    'ita': 'Italian',
+    'jpn': 'Japanese',
+    'kan': 'Kannada',
+    'kor': 'Korean',
+    'mal': 'Malayalam (India)',
+    'nld': 'Dutch',
+    'nor': 'Norwegian',
+    'pol': 'Polish',
+    'por': 'Portuguese',
+    'por_BR': 'Portuguese (Brazil)',
+    'por_PT': 'Portuguese (Portugal)',
+    'ron': 'Romanian',
+    'rus': 'Russian',
+    'spa': 'Spanish',
+    'spa_AR': 'Spanish (Argentina)',
+    'spa_MX': 'Spanish (Mexico)',
+    'spa_ES': 'Spanish (Spain)',
+    'swe': 'Swedish',
+    'tam': 'Tamil',
+    'tel': 'Telugu',
+    'tha': 'Thai',
+    'tur': 'Turkish',
+    'zho': 'Chinese',
+    'zho_CN': 'Chinese (China)',
+    'zho_TW': 'Chinese (Taiwan)',
+}
+
+
+@place_bp.app_template_filter()
+def expand_spec(spec):
+    return spec_expansion.get(spec, spec)
+
+
+@place_bp.app_template_filter()
+def expand_lang(lang):
+    return lang_expansion.get(lang, lang)
+
+
 @place_bp.route('/')
 def root_page():
     return render_template('place/index.html')
