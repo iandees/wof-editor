@@ -15,14 +15,14 @@ flask = "*"
 flask-bootstrap = "*"
 geojson = "*"
 gunicorn = "*"
-mapzen-whosonfirst-export = {editable = true,git = "https://github.com/iandees/py-mapzen-whosonfirst-export.git",ref = "py3"}
-mapzen-whosonfirst-geojson = {editable = true,git = "https://github.com/iandees/py-mapzen-whosonfirst-geojson.git",ref = "py3"}
-mapzen-whosonfirst-meta = {editable = true,git = "https://github.com/iandees/py-mapzen-whosonfirst-meta.git",ref = "py3"}
+mapzen-whosonfirst-export = {editable = true,git = "https://github.com/whosonfirst/py-mapzen-whosonfirst-export.git",ref = "master"}
+mapzen-whosonfirst-geojson = {editable = true,git = "https://github.com/whosonfirst/py-mapzen-whosonfirst-geojson.git",ref = "master"}
+mapzen-whosonfirst-meta = {editable = true,git = "https://github.com/whosonfirst/py-mapzen-whosonfirst-meta.git",ref = "master"}
 mapzen-whosonfirst-placetypes = {editable = true,git = "https://github.com/iandees/py-mapzen-whosonfirst-placetypes.git",ref = "py3"}
 mapzen-whosonfirst-sources = {editable = true,git = "https://github.com/iandees/py-mapzen-whosonfirst-sources.git",ref = "py3"}
-mapzen-whosonfirst-uri = {editable = true,git = "https://github.com/iandees/py-mapzen-whosonfirst-uri.git",ref = "py3"}
-mapzen-whosonfirst-utils = {editable = true,git = "https://github.com/iandees/py-mapzen-whosonfirst-utils.git",ref = "py3"}
-mapzen-whosonfirst-validator = {editable = true,git = "https://github.com/iandees/py-mapzen-whosonfirst-validator.git",ref = "py3"}
+mapzen-whosonfirst-uri = {editable = true,git = "https://github.com/whosonfirst/py-mapzen-whosonfirst-uri.git",ref = "master"}
+mapzen-whosonfirst-utils = {editable = true,git = "https://github.com/whosonfirst/py-mapzen-whosonfirst-utils.git",ref = "master"}
+mapzen-whosonfirst-validator = {editable = true,git = "https://github.com/whosonfirst/py-mapzen-whosonfirst-validator.git",ref = "master"}
 requests = "*"
 shapely = "*"
 rauth = "*"

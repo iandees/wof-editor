@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "fe8fd4e435f787bdf06302fc4ff608ceb5fd6f1ea0540df1c93830294e94d5d8"
+            "sha256": "ae666871f9bb6edc2eec8150ee0880f728d9c3209efe32f134053a60f293df3f"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -122,50 +122,50 @@
         },
         "jinja2": {
             "hashes": [
-                "sha256:6e7a3c2934694d59ad334c93dd1b6c96699cf24c53fdb8ec848ac6b23e685734",
-                "sha256:d6609ae5ec3d56212ca7d802eda654eaf2310000816ce815361041465b108be4"
+                "sha256:93187ffbc7808079673ef52771baa950426fd664d3aad1d0fa3e95644360e250",
+                "sha256:b0eaf100007721b5c16c1fc1eecb87409464edc10469ddc9a22a27a99123be49"
             ],
-            "version": "==2.11.0"
+            "version": "==2.11.1"
         },
         "mapzen-whosonfirst-export": {
             "editable": true,
-            "git": "https://github.com/iandees/py-mapzen-whosonfirst-export.git",
-            "ref": "9e36709371ff2d0849b84214ad524d8dd0c4a961"
+            "git": "https://github.com/whosonfirst/py-mapzen-whosonfirst-export.git",
+            "ref": "56620097e045ab12d74d54ac19b71e99f0984825"
         },
         "mapzen-whosonfirst-geojson": {
             "editable": true,
-            "git": "https://github.com/iandees/py-mapzen-whosonfirst-geojson.git",
-            "ref": "38ae6d3fccce473186190fcca570b0469048c4fd"
+            "git": "https://github.com/whosonfirst/py-mapzen-whosonfirst-geojson.git",
+            "ref": "c74041ed3fb44e2787d6d84102542cbdde7ba90f"
         },
         "mapzen-whosonfirst-meta": {
             "editable": true,
-            "git": "https://github.com/iandees/py-mapzen-whosonfirst-meta.git",
-            "ref": "0f4e52dcbb0e8dbe0c7a5dd6265884a59be8ee1c"
+            "git": "https://github.com/whosonfirst/py-mapzen-whosonfirst-meta.git",
+            "ref": "a410cabe26ffa7256f19b22e2e37bbe8403abe5c"
         },
         "mapzen-whosonfirst-placetypes": {
             "editable": true,
             "git": "https://github.com/iandees/py-mapzen-whosonfirst-placetypes.git",
-            "ref": "f1f13cfed5c7b13a9f2a707591eaf360d80f6a8f"
+            "ref": "3e15ca5ca1d6836b9d1bdb632b1a969fc411afff"
         },
         "mapzen-whosonfirst-sources": {
             "editable": true,
             "git": "https://github.com/iandees/py-mapzen-whosonfirst-sources.git",
-            "ref": "8f13ee8e2bc25376b9689bfecc551c6b5cbe0aa1"
+            "ref": "2281c69eecd8a8cf0a12b9e16d556372c82797a6"
         },
         "mapzen-whosonfirst-uri": {
             "editable": true,
-            "git": "https://github.com/iandees/py-mapzen-whosonfirst-uri.git",
-            "ref": "bf37b46ff070fa74f79279a3ab773163dbe803fc"
+            "git": "https://github.com/whosonfirst/py-mapzen-whosonfirst-uri.git",
+            "ref": "00e2fa81fc3e1f022995efa58d735927d1d4d1eb"
         },
         "mapzen-whosonfirst-utils": {
             "editable": true,
-            "git": "https://github.com/iandees/py-mapzen-whosonfirst-utils.git",
-            "ref": "4e43d9f25646f8c3a6ec2df852068ec47300d122"
+            "git": "https://github.com/whosonfirst/py-mapzen-whosonfirst-utils.git",
+            "ref": "ebd3ea5f69a68aed5f041f8ffa54800af842754d"
         },
         "mapzen-whosonfirst-validator": {
             "editable": true,
-            "git": "https://github.com/iandees/py-mapzen-whosonfirst-validator.git",
-            "ref": "939d4589fcdc1628b1efbeb81eff042f3a68aa8c"
+            "git": "https://github.com/whosonfirst/py-mapzen-whosonfirst-validator.git",
+            "ref": "8603e04d7d6ef1c4eb02e70af188b3ae569ff644"
         },
         "markupsafe": {
             "hashes": [
@@ -282,10 +282,10 @@
         },
         "werkzeug": {
             "hashes": [
-                "sha256:1e0dedc2acb1f46827daa2e399c1485c8fa17c0d8e70b6b875b4e7f54bf408d2",
-                "sha256:b353856d37dec59d6511359f97f6a4b2468442e454bd1c98298ddce53cac1f04"
+                "sha256:7f91416b2e6902e39190552d5e05bc94c0d5034688753fceb28eaa9d16795027",
+                "sha256:834e6f4828864350b7c173a2be027f0a692512bbe9d7ddd52da8e29ff991a726"
             ],
-            "version": "==0.16.1"
+            "version": "==1.0.0rc1"
         }
     },
     "develop": {
