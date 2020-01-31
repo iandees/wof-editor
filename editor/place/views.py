@@ -1,4 +1,5 @@
 import base64
+import collections
 import random
 import requests
 import string
@@ -20,8 +21,46 @@ def root_page():
     return render_template('place/index.html')
 
 
-@place_bp.route('/place/<int:id>/edit', methods=["GET", "POST"])
-def edit_place(id):
+def build_wof_doc_url(wof_id):
+    id_url_str = str(wof_id)
+    id_url_prefix = '/'.join(id_url_str[x:x+3] for x in range(0, len(id_url_str), 3))
+
+    return "https://data.whosonfirst.org/" + id_url_prefix + "/" + id_url_str + ".geojson"
+
+
+def parse_prefix_map(properties, prefix):
+    output = collections.defaultdict(dict)
+
+    for k, v in properties.items():
+        if not k.startswith(prefix):
+            continue
+
+        without_prefix = k[len(prefix):]
+        key_split = without_prefix.split("_x_")
+        lang = key_split[0]
+        specifier = key_split[1]
+
+        output[lang][specifier] = v
+
+    return output
+
+
+@place_bp.route('/place/<int:wof_id>/edit', methods=["GET", "POST"])
+def edit_place(wof_id):
+    # Load the WOF doc for display/edit
+    wof_doc_url = build_wof_doc_url(wof_id)
+    resp = requests.get(wof_doc_url)
+    if resp.status_code == 200:
+        wof_doc = resp.json()
+    elif resp.status_code == 404:
+        return "that wof doc doesn't exist", 404
+    else:
+        return "problem getting wof doc: HTTP %s for %s" % (resp.status_code, resp.request.url), 500
+
+    # Put localized_names and labels information in a more convenient container
+    localized_names = parse_prefix_map(wof_doc['properties'], 'name:')
+    localized_labels = parse_prefix_map(wof_doc['properties'], 'label:')
+
     if request.method == 'POST':
         branch_suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=5))
         branch_name = "foobar-" + branch_suffix
@@ -217,4 +256,9 @@ def edit_place(id):
         else:
             return "couldn't create pull request", 500
 
-    return render_template('place/edit.html')
+    return render_template(
+        'place/edit.html',
+        wof_doc=wof_doc,
+        localized_names=localized_names,
+        localized_labels=localized_labels,
+    )

@@ -15,362 +15,184 @@
 <script src="https://unpkg.com/@yaireo/tagify@2.31.6/dist/jQuery.tagify.min.js" integrity="sha384-oJRpUI+TNL56khhVpM5tcGH6Al77rv1qUUKXqmG0cMe5KtcNzLYfxgdcwunFouVe" crossorigin=""></script>
 <script src="languages.js"></script>
 <script type="text/javascript">
-    function loadWofId(id) {
-        var idAsString = id.toString();
-        var idChunks = [];
-        for (let i = 0; i < idAsString.length; i+=3) {
-            const idChunk = idAsString.substring(i, i+3);
-            idChunks.push(idChunk);
-        }
+$(document).ready(function() {
+    $("input.wof-input").on("change", function() {
+        let formValue = $(this).val();
+        let propertyName = $(this).data("wof-property-name");
 
-        var idURLPrefix = idChunks.join("/");
-        var url = "https://data.whosonfirst.org/" + idURLPrefix + "/" + idAsString + ".geojson";
+        let regex = $(this).data("wof-validation-regex");
+        let required = $(this).attr("required");
+        if (regex) {
+            if (formValue || required) {
+                var matched = formValue.match(regex);
 
-        loadWofUrl(url);
-    }
-
-    function loadWofUrl(url) {
-        $.getJSON(url, data => {
-            populateForm(data);
-        })
-    }
-
-    function buildAlternateTagify(prop, type, lang, displayName, values) {
-        let formGroup = $('<div class="form-group row">');
-        let inputSelect = $("<input>").
-            attr("name", prop + "-" + type + "-" + lang).
-            data("type", type).
-            data("lang", lang).
-            addClass(prop + "-select").
-            addClass("form-control");
-        formGroup.append($('<label class="col-sm-2 col-form-label">').text(displayName));
-        formGroup.append($('<div class="col-sm-10">').append(inputSelect));
-        inputSelect.tagify();
-        if (values) {
-            inputSelect.data('tagify').addTags(values);
-        }
-
-        return formGroup;
-    }
-
-    function parsePrefixMap(props, prefix) {
-        var output = {};
-
-        Object.keys(props).forEach(k => {
-            if (!k.startsWith(prefix)) {
-                return;
-            }
-
-            let withoutNamePrefix = k.substring(prefix.length);
-            let keySplit = withoutNamePrefix.split("_x_");
-            let lang = keySplit[0];
-            let specifier = keySplit[1];
-            let value = props[k];
-
-            if (!output.hasOwnProperty(lang)) {
-                output[lang] = {};
-            }
-
-            output[lang][specifier] = value;
-        });
-
-        return output;
-    }
-
-    function doExport(data) {
-        var w = window.open();
-        $(w.document.body).html('<pre>{\n' +
-            '  "id": ' + JSON.stringify(data.id) + ',\n' +
-            '  "type": ' + JSON.stringify(data.type) + ',\n' +
-            '  "properties": ' + JSON.stringify(data.properties, null, 2) + ',\n' +
-            '  "geometry": ' + JSON.stringify(data.geometry, null) + '\n' +
-            '}</pre>'
-        );
-    }
-
-    function populateForm(data) {
-        $("#place-name").text(data.properties["wof:name"]);
-
-        $("input.wof-input").val(function(i, value) {
-            return data.properties[$(this).data("wof-property-name")];
-        }).on("change", function() {
-            let formValue = $(this).val();
-            let propertyName = $(this).data("wof-property-name");
-            console.log("changing", propertyName, "to", formValue);
-            data.properties[propertyName] = formValue;
-
-            let regex = $(this).data("wof-validation-regex");
-            let required = $(this).attr("required");
-            if (regex) {
-                if (formValue || required) {
-                    var matched = formValue.match(regex);
-
-                    if (!matched) {
-                        $(this).addClass("is-invalid");
-                        $(this).removeClass("is-valid");
-                    } else {
-                        $(this).addClass("is-valid");
-                        $(this).removeClass("is-invalid");
-                    }
-                } else {
-                    // Remove valid/invalid if the value is not required and blank
+                if (!matched) {
+                    $(this).addClass("is-invalid");
                     $(this).removeClass("is-valid");
+                } else {
+                    $(this).addClass("is-valid");
                     $(this).removeClass("is-invalid");
                 }
+            } else {
+                // Remove valid/invalid if the value is not required and blank
+                $(this).removeClass("is-valid");
+                $(this).removeClass("is-invalid");
             }
-        });
-
-        $('input.wof-input[data-wof-type="list"]').tagify();
-
-        // Parse the alt names properties into a map of lang => {preferred, variant, etc}
-        var alternateNamesByLang = parsePrefixMap(data.properties, "name:");
-
-        // Add form rows for each language with tagify tag builders for each of preferred, variant, colloquial, etc.
-        Object.keys(alternateNamesByLang).forEach(lang => {
-            let rowDiv = $('<div class="row">');
-
-            let properties = alternateNamesByLang[lang];
-
-            // Keep track of the div we're creating so we can show/hide it later
-            alternateNamesByLang[lang]['rowDiv'] = rowDiv;
-
-            let langExpanded = languages[lang];
-            if (!langExpanded) {
-                langExpanded = lang;
-            }
-            rowDiv.append($('<div class="col-md-2">').html('<h5>' + langExpanded + '</h5>(<code>' + lang + '</code>)'));
-
-            let formSide = $('<div class="col-md-10">');
-
-            formSide.append(buildAlternateTagify("alternate-names", "preferred", lang, "Preferred", properties.preferred));
-            formSide.append(buildAlternateTagify("alternate-names", "variant", lang, "Variant", properties.variant));
-            formSide.append(buildAlternateTagify("alternate-names", "colloquial", lang, "Colloquial", properties.colloquial));
-            formSide.append(buildAlternateTagify("alternate-names", "historical", lang, "Historical", properties.historical));
-
-            rowDiv.append(formSide);
-            rowDiv.hide();
-
-            $("#alternate-names-placeholder").append(rowDiv);
-        });
-
-        // Set up a filter to pick which languages to show
-        $("#alternate-names-selected").tagify({
-            enforceWhitelist: true,
-            whitelist: Object.keys(alternateNamesByLang),
-            dropdown: {
-                enabled: 0,
-            }
-        }).on("add", function(e, tag) {
-            let langData = alternateNamesByLang[tag.data.value];
-            if (langData) {
-                $(langData.rowDiv).show();
-            }
-        }).on("remove", function(e, tag) {
-            let langData = alternateNamesByLang[tag.data.value];
-            if (langData) {
-                $(langData.rowDiv).hide();
-            }
-        });
-
-        // Default to showing English only
-        $("#alternate-names-selected").data("tagify").addTags("eng");
-
-        // Parse the labels properties into a map of lang => {preferred, variant, etc}
-        var localizedLabelsByLang = parsePrefixMap(data.properties, "label:");
-
-        // Add form rows for each language with tagify tag builders for each of preferred, variant, etc.
-        Object.keys(localizedLabelsByLang).forEach(lang => {
-            let rowDiv = $('<div class="row">');
-
-            let properties = localizedLabelsByLang[lang];
-
-            // Keep track of the div we're creating so we can show/hide it later
-            localizedLabelsByLang[lang]['rowDiv'] = rowDiv;
-
-            let langExpanded = languages[lang];
-            if (!langExpanded) {
-                langExpanded = lang;
-            }
-            rowDiv.append($('<div class="col-md-2">').html('<h5>' + langExpanded + '</h5>(<code>' + lang + '</code>)'));
-
-            let formSide = $('<div class="col-md-10">');
-
-            formSide.append(buildAlternateTagify("localized-labels", "colloquial", lang, "Colloquial", properties.colloquial));
-            formSide.append(buildAlternateTagify("localized-labels", "colloquial_abbreviation", lang, "Colloquial Abbrev.", properties.colloquial_abbreviation));
-            formSide.append(buildAlternateTagify("localized-labels", "historical", lang, "Historical", properties.historical));
-            formSide.append(buildAlternateTagify("localized-labels", "preferred", lang, "Preferred", properties.preferred));
-            formSide.append(buildAlternateTagify("localized-labels", "preferred_abbreviation", lang, "Preferred Abbrev.", properties.preferred_abbreviation));
-            formSide.append(buildAlternateTagify("localized-labels", "preferred_disambiguation", lang, "Preferred Disambiguation", properties.preferred_disambiguation));
-            formSide.append(buildAlternateTagify("localized-labels", "preferred_longname", lang, "Preferred Longname", properties.preferred_longname));
-            formSide.append(buildAlternateTagify("localized-labels", "preferred_placetype", lang, "Preferred Placetype", properties.preferred_placetype));
-            formSide.append(buildAlternateTagify("localized-labels", "preferred_shortcode", lang, "Preferred Shortcode", properties.preferred_shortcode));
-            formSide.append(buildAlternateTagify("localized-labels", "unknown", lang, "Unknown", properties.unknown));
-            formSide.append(buildAlternateTagify("localized-labels", "variant", lang, "Variant", properties.variant));
-            formSide.append(buildAlternateTagify("localized-labels", "variant_abbreviation", lang, "Variant Abbrev.", properties.variant_abbbreviation));
-            formSide.append(buildAlternateTagify("localized-labels", "variant_disambiguation", lang, "Variant Disambiguation", properties.variant_disambiguation));
-            formSide.append(buildAlternateTagify("localized-labels", "variant_longname", lang, "Variant Longname", properties.variant_longname));
-            formSide.append(buildAlternateTagify("localized-labels", "variant_shortcode", lang, "Variant Shortcode", properties.variant_shortcode));
-
-            rowDiv.append(formSide);
-            rowDiv.hide();
-
-            $("#localized-labels-placeholder").append(rowDiv);
-        });
-
-        // Set up a filter to pick which languages to show
-        $("#localized-labels-selected").tagify({
-            enforceWhitelist: true,
-            whitelist: Object.keys(localizedLabelsByLang),
-            dropdown: {
-                enabled: 0,
-            }
-        }).on("add", function(e, tag) {
-            let langData = localizedLabelsByLang[tag.data.value];
-            if (langData) {
-                $(langData.rowDiv).show();
-            }
-        }).on("remove", function(e, tag) {
-            let langData = localizedLabelsByLang[tag.data.value];
-            if (langData) {
-                $(langData.rowDiv).hide();
-            }
-        });
-
-        // Default to showing English only
-        $("#localized-labels-selected").data("tagify").addTags("eng");
-
-        // Attach the export button
-        $("#export-button").on("click", function(e) {
-            e.preventDefault();
-            doExport(data);
-        });
-    }
-
-    $(document).ready(function() {
-        const urlParams = new URLSearchParams(window.location.search);
-        var requestedID = urlParams.get("id");
-        var requestedURL = urlParams.get("url");
-        if (requestedID) {
-            loadWofId(parseInt(requestedID));
-        } else if (requestedURL) {
-            loadWofUrl(requestedURL);
         }
     });
+
+    $('input.wof-input[data-wof-type="list"]').tagify();
+    $(".use-tagify").tagify();
+
+    // Set up a filter to pick which languages to show
+    $("#alternate-names-selected").tagify({
+        enforceWhitelist: true,
+        whitelist: {{ localized_names.keys()|list|tojson }},
+        dropdown: {
+            enabled: 0,
+        }
+    }).on("add", function(e, tag) {
+        $(".localized-names-row[data-lang=\"" + tag.data.value + "\"]").show();
+    }).on("remove", function(e, tag) {
+        $(".localized-names-row[data-lang=\"" + tag.data.value + "\"]").hide();
+    });
+
+    // Default to showing English only
+    $(".localized-names-row").hide();
+    $("#alternate-names-selected").data("tagify").addTags("eng");
+
+    // Set up a filter to pick which languages to show
+    $("#localized-labels-selected").tagify({
+        enforceWhitelist: true,
+        whitelist: {{ localized_labels.keys()|list|tojson }},
+        dropdown: {
+            enabled: 0,
+        }
+    }).on("add", function(e, tag) {
+        $(".localized-labels-row[data-lang=\"" + tag.data.value + "\"]").show();
+    }).on("remove", function(e, tag) {
+        $(".localized-labels-row[data-lang=\"" + tag.data.value + "\"]").hide();
+    });
+
+    // Default to showing English only
+    $(".localized-labels-row").hide();
+    $("#localized-labels-selected").data("tagify").addTags("eng");
+});
 </script>
 {%- endblock %}
 
 {%- block page %}
 <h1>Who's On First Editor</h1>
 <hr/>
-<h3>Editing <span id="place-name"></span></h3>
+<h3>Editing {{ wof_doc.properties['wof:name'] }}</h3>
 
 <form class="needs-validation" novalidate>
     <!-- https://github.com/whosonfirst/whosonfirst-properties/blob/master/properties/wof/name.json -->
     <div class="form-group">
         <label for="wof-name">Name</label>&nbsp;<small>(<code>wof:name</code>)</small>
-        <input type="text" class="form-control wof-input" data-wof-property-name="wof:name">
+        <input type="text" class="form-control wof-input" data-wof-property-name="wof:name" value="{{ wof_doc.properties['wof:name'] }}">
         <small id="wof-name-help" class="form-text text-muted">An English UTF-7 transliterated representation of the name. (Some features have UTF-8 names.)</small>
     </div>
     <!-- https://github.com/whosonfirst/whosonfirst-properties/blob/master/properties/wof/shortcode.json -->
     <div class="form-group">
         <label for="wof-shortcode">Shortcode</label>&nbsp;<small>(<code>wof:shortcode</code>)</small>
-        <input type="text" class="form-control wof-input" data-wof-property-name="wof:shortcode">
+        <input type="text" class="form-control wof-input" data-wof-property-name="wof:shortcode" value="{{ wof_doc.properties['wof:shortcode'] }}">
         <small id="wof-shortcode-help" class="form-text text-muted">A two or three character alphabetic code, preferring three characters for country, two characters for region, and either two or three characters for county.</small>
     </div>
     <!-- https://github.com/whosonfirst/whosonfirst-properties/blob/master/properties/mz/is_current.json -->
     <div class="form-group">
         <label for="mz-is_current">Is Current</label>&nbsp;<small>(<code>mz:is_current</code>)</small>
-        <input type="text" class="form-control wof-input" data-wof-property-name="mz:is_current" data-wof-validation-regex="^\d+$">
+        <input type="text" class="form-control wof-input" data-wof-property-name="mz:is_current" data-wof-validation-regex="^\d+$" value="{{ wof_doc.properties['mz:iscurrent'] }}">
         <small id="mz-is_current-help" class="form-text text-muted"></small>
     </div>
     <!-- https://github.com/whosonfirst/whosonfirst-properties/blob/master/properties/mz/is_funky.json -->
     <div class="form-group">
         <label for="mz-is_funky">Disabled</label>&nbsp;<small>(<code>mz:is_funky</code>)</small>
-        <input type="text" class="form-control wof-input" data-wof-property-name="mz:is_funky">
+        <input type="text" class="form-control wof-input" data-wof-property-name="mz:is_funky" value="{{ wof_doc.properties['mz:is_funky'] }}">
         <small id="mz-is_funky-help" class="form-text text-muted">Used when Mapzen suspects the record is bad or inappropriate but additional confirmation is needed before the feature is deprecated. Records with a 1 value are recommended to be hidden from map display and search unless explicitly asked for by name.</small>
     </div>
     <!-- https://github.com/whosonfirst/whosonfirst-properties/blob/master/properties/mz/hierarchy_label.json -->
     <div class="form-group">
         <label for="mz-hierarchy_label">Include in Hierarchy Label</label>&nbsp;<small>(<code>mz:hierarchy_label</code>)</small>
-        <input type="text" class="form-control wof-input" data-wof-property-name="mz:hierarchy_label">
+        <input type="text" class="form-control wof-input" data-wof-property-name="mz:hierarchy_label" value="{{ wof_doc.properties['mz:hierarchy_label'] }}">
         <small id="mz-hierarchy_label-help" class="form-text text-muted">Used when generating place labels in geocoding software, like Pelias; this property defaults to True unless it is set to 0 manually. When Pelias decorates an address string, the hierarchy_label property is used to determine what is included in that address string.</small>
     </div>
     <!-- https://github.com/whosonfirst/whosonfirst-properties/blob/master/properties/edtf/cessation.json -->
     <div class="form-group">
         <label for="edtf-cessation">Cessation</label>&nbsp;<small>(<code>edtf:cessation</code>)</small>
-        <input type="text" class="form-control wof-input" data-wof-property-name="edtf:cessation">
+        <input type="text" class="form-control wof-input" data-wof-property-name="edtf:cessation" value="{{ wof_doc.properties['edtf:cessation'] }}">
         <small id="edtf-cessation-help" class="form-text text-muted">Indicates when a place stopped being a going concern. The semantics for something ceasing may vary from placetype to placetype. For example, a venue may cease operations or a country may split in to multiple countries.</small>
     </div>
     <!-- https://github.com/whosonfirst/whosonfirst-properties/blob/master/properties/edtf/deprecated.json -->
     <div class="form-group">
         <label for="edtf-deprecated">Deprecated</label>&nbsp;<small>(<code>edtf:deprecated</code>)</small>
-        <input type="text" class="form-control wof-input" data-wof-property-name="edtf:deprecated">
+        <input type="text" class="form-control wof-input" data-wof-property-name="edtf:deprecated" value="{{ wof_doc.properties['edtf:deprecated'] }}">
         <small id="edtf-deprecated-help" class="form-text text-muted">Indicates the date when a place was determined to be invalid (was never a going concern).</small>
     </div>
     <!-- https://github.com/whosonfirst/whosonfirst-properties/blob/master/properties/edtf/inception.json -->
     <div class="form-group">
         <label for="edtf-inception">Inception</label>&nbsp;<small>(<code>edtf:inception</code>)</small>
-        <input type="text" class="form-control wof-input" data-wof-property-name="edtf:inception">
+        <input type="text" class="form-control wof-input" data-wof-property-name="edtf:inception" value="{{ wof_doc.properties['edtf:inception'] }}">
         <small id="edtf-inception-help" class="form-text text-muted">Indicates the date when a place was first created or established.</small>
     </div>
     <!-- https://github.com/whosonfirst/whosonfirst-properties/blob/master/properties/edtf/superseded.json -->
     <div class="form-group">
         <label for="edtf-superseded">Superseded</label>&nbsp;<small>(<code>edtf:superseded</code>)</small>
-        <input type="text" class="form-control wof-input" data-wof-property-name="edtf:superseded">
+        <input type="text" class="form-control wof-input" data-wof-property-name="edtf:superseded" value="{{ wof_doc.properties['edtf:superseded'] }}">
         <small id="edtf-superseded-help" class="form-text text-muted">Indicates the date when a record was superseded by another record.</small>
     </div>
     <!-- https://github.com/whosonfirst/whosonfirst-properties/blob/master/properties/wof/population.json -->
     <div class="form-group">
         <label for="wof-population">Population</label>&nbsp;<small>(<code>wof:population</code>)</small>
-        <input type="text" class="form-control wof-input" data-wof-property-name="wof:population" data-wof-validation-regex="^\d+$">
+        <input type="text" class="form-control wof-input" data-wof-property-name="wof:population" data-wof-validation-regex="^\d+$" value="{{ wof_doc.properties['wof:population'] }}">
         <small id="wof-population-help" class="form-text text-muted">An integer value to represent the most current, known population of a place.</small>
     </div>
     <!-- https://github.com/whosonfirst/whosonfirst-properties/blob/master/properties/mz/min_zoom.json -->
     <div class="form-group">
         <label for="mz-min_zoom">Min Zoom</label>&nbsp;<small>(<code>mz:min_zoom</code>)</small>
-        <input type="text" class="form-control wof-input" data-wof-property-name="mz:min_zoom" data-wof-validation-regex="^\d+\.?\d*$">
+        <input type="text" class="form-control wof-input" data-wof-property-name="mz:min_zoom" data-wof-validation-regex="^\d+\.?\d*$" value="{{ wof_doc.properties['mz:min_zoom'] }}">
         <small id="mz-min_zoom-help" class="form-text text-muted">Float values (though in practice mosts are integer values) that match to web map zoom schema. Common range is 0.0 to 18.0, though they can be greater.</small>
     </div>
     <!-- https://github.com/whosonfirst/whosonfirst-properties/blob/master/properties/mz/max_zoom.json -->
     <div class="form-group">
         <label for="mz-max_zoom">Max Zoom</label>&nbsp;<small>(<code>mz:max_zoom</code>)</small>
-        <input type="text" class="form-control wof-input" data-wof-property-name="mz:max_zoom" data-wof-validation-regex="^\d+\.?\d*$">
+        <input type="text" class="form-control wof-input" data-wof-property-name="mz:max_zoom" data-wof-validation-regex="^\d+\.?\d*$" value="{{ wof_doc.properties['mz:max_zoom'] }}">
         <small id="mz-max_zoom-help" class="form-text text-muted">Float values (though in practice mosts are integer values) that match to web map zoom schema. Common range is 0.0 to 18.0, though they can be greater.</small>
     </div>
     <!-- https://github.com/whosonfirst/whosonfirst-properties/blob/master/properties/lbl/min_zoom.json -->
     <div class="form-group">
         <label for="lbl-min_zoom">Label Min Zoom</label>&nbsp;<small>(<code>lbl:min_zoom</code>)</small>
-        <input type="text" class="form-control wof-input" data-wof-property-name="lbl:min_zoom" data-wof-validation-regex="^\d+\.?\d*$">
+        <input type="text" class="form-control wof-input" data-wof-property-name="lbl:min_zoom" data-wof-validation-regex="^\d+\.?\d*$" value="{{ wof_doc.properties['lbl:min_zoom'] }}">
         <small id="lbl-min_zoom-help" class="form-text text-muted">When the feature's label should first appear. Float values (though in practice mosts are integer values) that match to web map zoom schema. Common range is 0.0 to 18.0, though they can be greater.</small>
     </div>
     <!-- https://github.com/whosonfirst/whosonfirst-properties/blob/master/properties/lbl/max_zoom.json -->
     <div class="form-group">
         <label for="lbl-max_zoom">Label Max Zoom</label>&nbsp;<small>(<code>lbl:max_zoom</code>)</small>
-        <input type="text" class="form-control wof-input" data-wof-property-name="lbl:max_zoom" data-wof-validation-regex="^\d+\.?\d*$">
+        <input type="text" class="form-control wof-input" data-wof-property-name="lbl:max_zoom" data-wof-validation-regex="^\d+\.?\d*$" value="{{ wof_doc.properties['lbl:max_zoom'] }}">
         <small id="lbl-max_zoom-help" class="form-text text-muted">When the feature's label should be removed (or switched to a different representation like exterior ring labels). Float values (though in practice mosts are integer values) that match to web map zoom schema. Common range is 0.0 to 18.0, though they can be greater.</small>
     </div>
     <!-- https://github.com/whosonfirst/whosonfirst-properties/blob/master/properties/wof/lang_x_spoken.json -->
     <div class="form-group">
         <label for="wof-lang_x_spoken">Spoken Languages</label>&nbsp;<small>(<code>wof:lang_x_spoken</code>)</small>
-        <input type="text" class="form-control wof-input" data-wof-property-name="wof:lang_x_spoken" data-wof-type="list" pattern="^[a-z]{3}$">
+        <input type="text" class="form-control wof-input" data-wof-property-name="wof:lang_x_spoken" data-wof-type="list" pattern="^[a-z]{3}$" value="{{ wof_doc.properties['wof:lang_x_spoken'] }}">
         <small id="wof-lang_x_spoken-help" class="form-text text-muted">One or more ISO-639-3 language identifiers. These represent the languages, inclusive of official languages, spoken in the location of the corresponding WOF record.</small>
     </div>
     <!-- https://github.com/whosonfirst/whosonfirst-properties/blob/master/properties/wof/lang_x_official.json -->
     <div class="form-group">
         <label for="wof-lang_x_official">Official Languages</label>&nbsp;<small>(<code>wof:lang_x_official</code>)</small>
-        <input type="text" class="form-control wof-input" data-wof-property-name="wof:lang_x_official" data-wof-type="list" pattern="^[a-z]{3}$">
+        <input type="text" class="form-control wof-input" data-wof-property-name="wof:lang_x_official" data-wof-type="list" pattern="^[a-z]{3}$" value="{{ wof_doc.properties['wof:lang_x_official'] }}">
         <small id="wof-lang_x_official-help" class="form-text text-muted">One or more ISO-639-3 language identifiers. These represent the officially recognized languages of the location of the corresponding WOF record.</small>
     </div>
     <!-- https://github.com/whosonfirst/whosonfirst-properties/blob/master/properties/wof/country.json -->
     <div class="form-group">
         <label for="wof-country">Country Code</label>&nbsp;<small>(<code>wof:country</code>)</small>
-        <input type="text" class="form-control wof-input" data-wof-property-name="wof:country" data-wof-validation-regex="^[A-Za-z]{2}$">
+        <input type="text" disabled class="form-control wof-input" data-wof-property-name="wof:country" data-wof-validation-regex="^[A-Za-z]{2}$" value="{{ wof_doc.properties['wof:country'] }}">
         <small id="wof-country-help" class="form-text text-muted">A two-letter country code from ISO 3166.</small>
     </div>
     <!-- https://github.com/whosonfirst/whosonfirst-properties/blob/master/properties/iso/country.json -->
     <div class="form-group">
         <label for="iso-country">ISO Country Code</label>&nbsp;<small>(<code>iso:country</code>)</small>
-        <input type="text" class="form-control wof-input" data-wof-property-name="iso:country" data-wof-validation-regex="^[A-Za-z]{2}$">
+        <input type="text" class="form-control wof-input" data-wof-property-name="iso:country" data-wof-validation-regex="^[A-Za-z]{2}$" value="{{ wof_doc.properties['iso:country'] }}">
         <small id="iso-country-help" class="form-text text-muted">The two-letter country code from ISO 3166-1.</small>
     </div>
 
@@ -380,6 +202,21 @@
         <input type="text" class="form-control" id="alternate-names-selected">
     </div>
     <div class="form-group" id="alternate-names-placeholder">
+        {%- for lang, specs in localized_names.items() %}
+        <div class="row localized-names-row" data-lang="{{ lang }}">
+            <div class="col-sm-2"><h5>{{ lang }}</h5><small>(<code>{{ lang }}</code>)</small></div>
+            <div class="col-sm-10">
+                {%- for spec, v in specs.items() %}
+                <div class="form-group row">
+                    <label class="col-sm-2 col-form-label">{{ spec }}</label>
+                    <div class="col-sm-10">
+                        <input name="prop-type-lang" data-type="{{ spec }}" data-lang="{{ lang }}" class="form-control use-tagify" value='{{ v|tojson }}' />
+                    </div>
+                </div>
+                {%- endfor %}
+            </div>
+        </div>
+        {%- endfor %}
     </div>
 
     <h4>Localized Labels</h4>
@@ -387,7 +224,22 @@
         <label for="localized-labels-selected">Filter</label>
         <input type="text" class="form-control" id="localized-labels-selected">
     </div>
-    <div class="form-group" id="localized-labels-placeholder">
+    <div class="form-group" id="alternate-names-placeholder">
+        {%- for lang, specs in localized_labels.items() %}
+        <div class="row localized-labels-row" data-lang="{{ lang }}">
+            <div class="col-sm-2"><h5>{{ lang }}</h5><small>(<code>{{ lang }}</code>)</small></div>
+            <div class="col-sm-10">
+                {%- for spec, v in specs.items() %}
+                <div class="form-group row">
+                    <label class="col-sm-2 col-form-label">{{ spec }}</label>
+                    <div class="col-sm-10">
+                        <input name="prop-type-lang" data-type="{{ spec }}" data-lang="{{ lang }}" class="form-control use-tagify" value='{{ v|tojson }}' />
+                    </div>
+                </div>
+                {%- endfor %}
+            </div>
+        </div>
+        {%- endfor %}
     </div>
 
     <div class="form-group">
