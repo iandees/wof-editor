@@ -128,6 +128,18 @@ def parse_prefix_map(properties, prefix):
     return output
 
 
+def maybe_float(i):
+    return float(i) if i else None
+
+
+def maybe_int(i):
+    return int(i) if i else None
+
+
+def list_of_str(i):
+    return json.loads(i) if i else None
+
+
 def apply_change(wof, form, attr_name, formatter=str):
     raw_new_value = form[attr_name]
     old_value = wof['properties'].get(attr_name)
@@ -193,14 +205,20 @@ def edit_place(wof_id):
         apply_change(wof_doc, request.form, "edtf:deprecated")
         apply_change(wof_doc, request.form, "edtf:inception")
         apply_change(wof_doc, request.form, "edtf:superseded")
-        apply_change(wof_doc, request.form, "wof:population", formatter=int)
-        apply_change(wof_doc, request.form, "mz:min_zoom", formatter=float)
-        apply_change(wof_doc, request.form, "mz:max_zoom", formatter=float)
-        apply_change(wof_doc, request.form, "lbl:min_zoom", formatter=float)
-        apply_change(wof_doc, request.form, "lbl:max_zoom", formatter=float)
+        apply_change(wof_doc, request.form, "wof:population", maybe_int)
+        apply_change(wof_doc, request.form, "mz:min_zoom", maybe_float)
+        apply_change(wof_doc, request.form, "mz:max_zoom", maybe_float)
+        apply_change(wof_doc, request.form, "lbl:min_zoom", maybe_float)
+        apply_change(wof_doc, request.form, "lbl:max_zoom", maybe_float)
         apply_change(wof_doc, request.form, "wof:lang_x_spoken")
         apply_change(wof_doc, request.form, "wof:lang_x_official")
         apply_change(wof_doc, request.form, "iso:country")
+
+        for k, v in filter(lambda i: i[0].startswith('name:'), request.form):
+            apply_change(wof_doc, request.form, k, list_of_str)
+
+        for k, v in filter(lambda i: i[0].startswith('label:'), request.form):
+            apply_change(wof_doc, request.form, k, list_of_str)
 
         # Validate those changes with the WOF validator code
         validator = mapzen.whosonfirst.validator.validator()
