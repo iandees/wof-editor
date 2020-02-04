@@ -1,5 +1,7 @@
 import base64
 import collections
+import io
+import mapzen.whosonfirst.validator
 import random
 import requests
 import string
@@ -13,6 +15,7 @@ from flask import (
     render_template,
     request,
     session,
+    url_for,
 )
 
 
@@ -91,11 +94,21 @@ def root_page():
     return render_template('place/index.html')
 
 
-def build_wof_doc_url(wof_id):
+def log_response(resp):
+    return "{req_method} {req_url} (data {req_body}) results in HTTP {res_status} (data {res_body})".format(
+        req_method=resp.request.method,
+        req_url=resp.request.url,
+        req_body=resp.request.body[:500] if resp.request.body else "<none>",
+        res_status=resp.status_code,
+        res_body=resp.content[:500] if resp.content else "<none>",
+    )
+
+
+def build_wof_doc_url_suffix(wof_id):
     id_url_str = str(wof_id)
     id_url_prefix = '/'.join(id_url_str[x:x+3] for x in range(0, len(id_url_str), 3))
 
-    return "https://data.whosonfirst.org/" + id_url_prefix + "/" + id_url_str + ".geojson"
+    return id_url_prefix + "/" + id_url_str + ".geojson"
 
 
 def parse_prefix_map(properties, prefix):
@@ -115,11 +128,48 @@ def parse_prefix_map(properties, prefix):
     return output
 
 
+def apply_change(wof, form, attr_name, validator=None, formatter=str):
+    raw_new_value = form[attr_name]
+
+    if validator:
+        validator(raw_new_value)
+
+    new_value = formatter(raw_new_value)
+    old_value = wof['properties'].get(attr_name)
+
+    # Only change the doc if the new value is non-null and different from existing
+    if old_value != new_value and new_value:
+        wof['properties'][attr_name] = new_value
+
+
+def build_wof_repo_name(wof):
+    props = wof['properties']
+    wof_repo = props.get('wof:repo')
+    if wof_repo:
+        return "whosonfirst-data/" + wof_repo
+
+    wof_country = props['wof:country']
+    wof_placetype = props['wof:placetype']
+
+    if wof_placetype in ('country', 'county', 'locality'):
+        return "whosonfirst-data/whosonfirst-data-admin-" + wof_country.lower()
+    elif wof_placetype in ('venue',):
+        return "whosonfirst-data/whosonfirst-data-venue-" + wof_country.lower()
+
+
+def build_wof_branchname(wof):
+    props = wof['properties']
+    branch_suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=3))
+
+    return "wofedit-%s-%s" % (props['wof:id'], branch_suffix)
+
+
 @place_bp.route('/place/<int:wof_id>/edit', methods=["GET", "POST"])
 def edit_place(wof_id):
     # Load the WOF doc for display/edit
-    wof_doc_url = build_wof_doc_url(wof_id)
-    resp = requests.get(wof_doc_url)
+    wof_doc_url_suffix = build_wof_doc_url_suffix(wof_id)
+    resp = requests.get("https://data.whosonfirst.org/" + wof_doc_url_suffix)
+    current_app.logger.warn(log_response(resp))
     if resp.status_code == 200:
         wof_doc = resp.json()
     elif resp.status_code == 404:
@@ -132,30 +182,62 @@ def edit_place(wof_id):
     localized_labels = parse_prefix_map(wof_doc['properties'], 'label:')
 
     if request.method == 'POST':
-        branch_suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=5))
-        branch_name = "foobar-" + branch_suffix
-        file_path = "testing/abc123.json"
-        file_content = request.form.get('name')
-
-        base_repo = 'zpqrtbnk/test-repo'
-        base_ref = 'heads/master'
 
         if current_user.is_anonymous:
             flash("Need to login first")
+            session['next'] = request.url
+            return redirect(url_for('auth.login'))
+
+        # Consume the changes from the form
+        apply_change(wof_doc, request.form, "wof:name")
+        apply_change(wof_doc, request.form, "wof:shortcode")
+        apply_change(wof_doc, request.form, "mz:is_current")
+        apply_change(wof_doc, request.form, "mz:is_funny")
+        apply_change(wof_doc, request.form, "mz:hierarchy_label")
+        apply_change(wof_doc, request.form, "edtf:cessation")
+        apply_change(wof_doc, request.form, "edtf:deprecated")
+        apply_change(wof_doc, request.form, "edtf:inception")
+        apply_change(wof_doc, request.form, "edtf:superseded")
+        apply_change(wof_doc, request.form, "wof:population", formatter=int)
+        apply_change(wof_doc, request.form, "mz:min_zoom", formatter=float)
+        apply_change(wof_doc, request.form, "mz:max_zoom", formatter=float)
+        apply_change(wof_doc, request.form, "lbl:min_zoom", formatter=float)
+        apply_change(wof_doc, request.form, "lbl:max_zoom", formatter=float)
+        apply_change(wof_doc, request.form, "wof:lang_x_spoken")
+        apply_change(wof_doc, request.form, "wof:lang_x_official")
+        apply_change(wof_doc, request.form, "iso:country")
+
+        # Validate those changes with the WOF validator code
+        validator = mapzen.whosonfirst.validator.validator()
+        report = validator.validate_feature(wof_doc)
+
+        if not report.ok():
+            report_output = io.StringIO()
+            report.print_report(report_output)
+            report_output.seek(0)
+
+            flash("Error running WOF Validate on your changes: %s" % report_output)
             return redirect(request.url)
+
+        # Exportify the new WOF document
+        exporter = mapzen.whosonfirst.export.string()
+        exportified_wof_doc = exporter.export_feature(wof_doc)
+
+        # Begin the process of setting up a pull request
+        base_repo = build_wof_repo_name(wof_doc)
+        branch_name = build_wof_branchname(wof_doc)
+        base_ref = 'heads/master'
+
+        file_path = "data/" + wof_doc_url_suffix
+        file_content = exportified_wof_doc
+        place_name = wof_doc['properties']['wof:name']
 
         sess = requests.Session()
         sess.headers['Authorization'] = ('token ' + session.get('access_token'))
 
         # Get the sha1 of `master` branch
         resp = sess.get('https://api.github.com/repos/%s/git/ref/%s' % (base_repo, base_ref))
-        current_app.logger.warn(
-            "%s %s results in HTTP %d %s",
-            resp.request.method,
-            resp.request.url,
-            resp.status_code,
-            resp.content
-        )
+        current_app.logger.warn(log_response(resp))
         data = resp.json()
         base_ref_sha = data['object']['sha']
 
@@ -167,14 +249,7 @@ def edit_place(wof_id):
                 'sha': base_ref_sha,
             }
         )
-        current_app.logger.warn(
-            "%s %s (data %s) results in HTTP %d %s",
-            resp.request.method,
-            resp.request.url,
-            resp.request.body,
-            resp.status_code,
-            resp.content,
-        )
+        current_app.logger.warn(log_response(resp))
 
         if resp.status_code == 404:
             current_app.logger.warn(
@@ -186,13 +261,7 @@ def edit_place(wof_id):
                 'https://api.github.com/repos/%s/forks' % (base_repo,),
                 json={},
             )
-            current_app.logger.warn(
-                "%s %s results in HTTP %d %s",
-                resp.request.method,
-                resp.request.url,
-                resp.status_code,
-                resp.content,
-            )
+            current_app.logger.warn(log_response(resp))
 
             if resp.status_code == 202:
                 fork_repo = resp.json()['full_name']
@@ -209,6 +278,7 @@ def edit_place(wof_id):
                     )
 
                     if resp.status_code == 200:
+                        write_repo = fork_repo
                         current_app.logger.warn(
                             "Fork finished after %s checks",
                             t,
@@ -233,17 +303,9 @@ def edit_place(wof_id):
                     'sha': base_ref_sha,
                 }
             )
-            current_app.logger.warn(
-                "%s %s (data %s) results in HTTP %d %s",
-                resp.request.method,
-                resp.request.url,
-                resp.request.body,
-                resp.status_code,
-                resp.content,
-            )
+            current_app.logger.warn(log_response(resp))
 
             if resp.status_code == 201:
-                write_repo = fork_repo
                 current_app.logger.warn(
                     "Branch %s created on forked repo %s",
                     branch_name,
@@ -259,30 +321,39 @@ def edit_place(wof_id):
                 base_repo,
             )
 
-        # Now that we have a branch that we can write to, create a file on it
+        # Now that we have a branch that we can write to, update the file on it
+        resp = sess.get(
+            'https://api.github.com/repos/%s/contents/%s' % (write_repo, file_path),
+        )
+
+        current_app.logger.warn(log_response(resp))
+        if resp.status_code == 200:
+            existing_file_sha = resp.json()['sha']
+            current_app.logger.warn(
+                "Will update file %s with sha %s in repo %s",
+                file_path,
+                existing_file_sha,
+                write_repo,
+            )
+        else:
+            return "couldn't find existing file %s in %s" % (file_path, write_repo), 500
+
         file_content_b64 = base64.standard_b64encode(file_content.encode('utf8')).decode('utf8')
 
         resp = sess.put(
             'https://api.github.com/repos/%s/contents/%s' % (write_repo, file_path),
             json={
-                "message": "Adding file.",
+                "message": "Updating %s" % place_name,
                 "content": file_content_b64,
                 "branch": branch_name,
-                # "sha": "",  # TODO If updating an existing file, need to get the sha of the blob in the repo to update
+                "sha": existing_file_sha,
             }
         )
 
-        current_app.logger.warn(
-            "%s %s (data %s) results in HTTP %d %s",
-            resp.request.method,
-            resp.request.url,
-            resp.request.body,
-            resp.status_code,
-            resp.content,
-        )
-        if resp.status_code == 201:
+        current_app.logger.warn(log_response(resp))
+        if resp.status_code == 200:
             current_app.logger.warn(
-                "File %s was created in repo %s on branch %s, commit %s",
+                "File %s was updated in repo %s on branch %s, commit %s",
                 file_path,
                 write_repo,
                 branch_name,
@@ -290,29 +361,22 @@ def edit_place(wof_id):
             )
 
         else:
-            return "couldn't create file on branch", 500
+            return "couldn't update file on branch", 500
 
         # We've created a file, now let's create the pull request
         resp = sess.post(
             'https://api.github.com/repos/%s/pulls' % (base_repo,),
             json={
-                "title": "Test Updating A File With API",
+                "title": "Update Place %s" % place_name,
                 "head": (fork_owner + branch_name),
                 "base": "master",
-                "body": "This is a test of updating a file with a pull request on a forked repo using the GitHub API. Please pardon the noise.",
+                "body": "Updating `%s` using the [WOF Editor](https://github.com/iandees/wof-editor)" % file_path,
                 "maintainer_can_modify": True,
                 "draft": False,
             }
         )
 
-        current_app.logger.warn(
-            "%s %s (data %s) results in HTTP %d %s",
-            resp.request.method,
-            resp.request.url,
-            resp.request.body,
-            resp.status_code,
-            resp.content,
-        )
+        current_app.logger.warn(log_response(resp))
         if resp.status_code == 201:
             pr_url = resp.json()['html_url']
 
