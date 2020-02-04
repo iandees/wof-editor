@@ -1,6 +1,6 @@
 {%- extends "_template.html" %}
 
-{%- block title %}{{ super() }} : Edit Place{%- endblock %}
+{%- block title %}{{ super() }} : Edit {{ wof_doc.properties['wof:name'] }}{%- endblock %}
 
 {%- block styles %}
 {{ super() }}
@@ -81,8 +81,6 @@ $(document).ready(function() {
 {%- endblock %}
 
 {%- block page %}
-<h1>Who's On First Editor</h1>
-<hr/>
 <h3>Editing {{ wof_doc.properties['wof:name'] }}</h3>
 
 <form class="needs-validation" novalidate method="POST">

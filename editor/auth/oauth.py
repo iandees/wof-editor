@@ -85,7 +85,7 @@ class GithubSignIn(OAuthSignIn):
 
         return (
             'github$%s' % me['id'],
-            me['name'],
+            me['login'],
             me['email'],
             oauth_session.access_token,
         )

@@ -44,23 +44,19 @@ def login():
 def logout():
     logout_user()
     session.pop('access_token', None)
+    session.pop('username', None)
     session.pop('next', None)
     return redirect(url_for('place.root_page'))
 
 
 @auth_bp.route('/authorize/<provider>')
 def oauth_authorize(provider):
-    if not current_user.is_anonymous:
-        return redirect(session.pop('next'))
     oauth = OAuthSignIn.get_provider(provider)
     return oauth.authorize()
 
 
 @auth_bp.route('/callback/<provider>')
 def oauth_callback(provider):
-    if not current_user.is_anonymous:
-        return redirect(session.pop('next'))
-
     oauth = OAuthSignIn.get_provider(provider)
     if not oauth:
         return 'unknown provider', 404
@@ -76,7 +72,8 @@ def oauth_callback(provider):
 
     login_user(user, True)
     session['access_token'] = access_token
+    session['username'] = username
 
-    next_url = session.pop('next', None)
+    next_url = session.pop('next', None) or url_for('place.root_page')
 
     return redirect(next_url)
