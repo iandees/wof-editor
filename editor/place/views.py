@@ -379,8 +379,7 @@ def edit_place(wof_id):
                 pr_url,
             )
 
-            flash("Created pull request %s" % pr_url)
-            return redirect(request.url)
+            return redirect(pr_url)
         else:
             return "couldn't create pull request", 500
 
