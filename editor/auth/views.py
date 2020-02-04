@@ -33,12 +33,9 @@ def get_redirect_target():
 
 @auth_bp.route('/login')
 def login():
-    next_url = request.args.get('next') or url_for('place.root_page')
-    if next_url and is_safe_url(next_url):
-        session['next'] = next_url
-
     if not current_user.is_anonymous:
-        return redirect(session.pop('next'))
+        next_url = session.pop('next', None) or url_for('place.root_page')
+        return redirect(next_url)
     else:
         return redirect(url_for('auth.oauth_authorize', provider='github'))
 
@@ -47,6 +44,7 @@ def login():
 def logout():
     logout_user()
     session.pop('access_token', None)
+    session.pop('next', None)
     return redirect(url_for('place.root_page'))
 
 
