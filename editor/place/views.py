@@ -128,18 +128,13 @@ def parse_prefix_map(properties, prefix):
     return output
 
 
-def apply_change(wof, form, attr_name, validator=None, formatter=str):
+def apply_change(wof, form, attr_name, formatter=str):
     raw_new_value = form[attr_name]
-
-    if validator:
-        validator(raw_new_value)
-
-    new_value = formatter(raw_new_value)
     old_value = wof['properties'].get(attr_name)
 
     # Only change the doc if the new value is non-null and different from existing
-    if old_value != new_value and new_value:
-        wof['properties'][attr_name] = new_value
+    if old_value != raw_new_value and raw_new_value:
+        wof['properties'][attr_name] = formatter(raw_new_value)
 
 
 def build_wof_repo_name(wof):
@@ -192,7 +187,7 @@ def edit_place(wof_id):
         apply_change(wof_doc, request.form, "wof:name")
         apply_change(wof_doc, request.form, "wof:shortcode")
         apply_change(wof_doc, request.form, "mz:is_current")
-        apply_change(wof_doc, request.form, "mz:is_funny")
+        apply_change(wof_doc, request.form, "mz:is_funky")
         apply_change(wof_doc, request.form, "mz:hierarchy_label")
         apply_change(wof_doc, request.form, "edtf:cessation")
         apply_change(wof_doc, request.form, "edtf:deprecated")
@@ -229,7 +224,6 @@ def edit_place(wof_id):
         base_ref = 'heads/master'
 
         file_path = "data/" + wof_doc_url_suffix
-        file_content = exportified_wof_doc
         place_name = wof_doc['properties']['wof:name']
 
         sess = requests.Session()
@@ -338,7 +332,7 @@ def edit_place(wof_id):
         else:
             return "couldn't find existing file %s in %s" % (file_path, write_repo), 500
 
-        file_content_b64 = base64.standard_b64encode(file_content.encode('utf8')).decode('utf8')
+        file_content_b64 = base64.standard_b64encode(exportified_wof_doc.encode('utf8')).decode('utf8')
 
         resp = sess.put(
             'https://api.github.com/repos/%s/contents/%s' % (write_repo, file_path),
