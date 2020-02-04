@@ -11,6 +11,7 @@ from flask_login import current_user
 from flask import (
     current_app,
     flash,
+    make_response,
     redirect,
     render_template,
     request,
@@ -190,11 +191,6 @@ def edit_place(wof_id):
 
     if request.method == 'POST':
 
-        if current_user.is_anonymous:
-            flash("Need to login first")
-            session['next'] = request.url
-            return redirect(url_for('auth.login'))
-
         # Consume the changes from the form
         apply_change(wof_doc, request.form, "wof:name")
         apply_change(wof_doc, request.form, "wof:shortcode")
@@ -235,6 +231,17 @@ def edit_place(wof_id):
         # Exportify the new WOF document
         exporter = mapzen.whosonfirst.export.string()
         exportified_wof_doc = exporter.export_feature(wof_doc)
+
+        if request.form['next-step'] == 'export':
+            response = make_response(exportified_wof_doc)
+            response.headers.set('Content-Type', 'application/json')
+            response.headers.set('Content-Disposition', 'attachment', filename='%s.geojson' % wof_id)
+            return response
+
+        if current_user.is_anonymous:
+            flash("Need to login first")
+            session['next'] = request.url
+            return redirect(url_for('auth.login'))
 
         # Begin the process of setting up a pull request
         base_repo = build_wof_repo_name(wof_doc)

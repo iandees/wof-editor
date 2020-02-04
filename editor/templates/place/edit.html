@@ -240,7 +240,12 @@ $(document).ready(function() {
     </div>
 
     <div class="form-group">
-        <button type="submit" class="btn btn-primary" id="export-button">Propose Change on GitHub</button>
+        <button type="submit" name="next-step" value="pr" class="btn btn-primary">Propose Change on GitHub</button>
+        <p class="help-block">Create a GitHub pull request with the changes you made above.</p>
+    </div>
+    <div class="form-group">
+        <button type="submit" name="next-step" value="export" class="btn btn-default">Export Changes</button>
+        <p class="help-block">Download the changes you made above as a properly-formatted Who's On First JSON document.</p>
     </div>
 </form>
 {%- endblock %}
