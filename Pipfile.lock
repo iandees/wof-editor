@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "ae666871f9bb6edc2eec8150ee0880f728d9c3209efe32f134053a60f293df3f"
+            "sha256": "c4e5e1e814b1f7be6a08ee3b51a7d00183540d0373ac1cac1bc82b5dacc6616a"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -144,13 +144,13 @@
         },
         "mapzen-whosonfirst-placetypes": {
             "editable": true,
-            "git": "https://github.com/iandees/py-mapzen-whosonfirst-placetypes.git",
-            "ref": "3e15ca5ca1d6836b9d1bdb632b1a969fc411afff"
+            "git": "https://github.com/whosonfirst/py-mapzen-whosonfirst-placetypes.git",
+            "ref": "767f64328ddef6f2531f9a2f2bfb53a170fb313f"
         },
         "mapzen-whosonfirst-sources": {
             "editable": true,
-            "git": "https://github.com/iandees/py-mapzen-whosonfirst-sources.git",
-            "ref": "2281c69eecd8a8cf0a12b9e16d556372c82797a6"
+            "git": "https://github.com/whosonfirst/py-mapzen-whosonfirst-sources.git",
+            "ref": "9216c4d86d9067f1bf5f3b1d965e5d922a43816b"
         },
         "mapzen-whosonfirst-uri": {
             "editable": true,
