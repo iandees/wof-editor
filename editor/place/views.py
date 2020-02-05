@@ -1,6 +1,7 @@
 import base64
 import collections
 import io
+import json
 import mapzen.whosonfirst.validator
 import random
 import requests
@@ -138,16 +139,19 @@ def maybe_int(i):
 
 
 def list_of_str(i):
-    return json.loads(i) if i else None
+    return [v['value'] for v in json.loads(i)] if i else None
 
 
 def apply_change(wof, form, attr_name, formatter=str):
     raw_new_value = form[attr_name]
     old_value = wof['properties'].get(attr_name)
 
-    # Only change the doc if the new value is non-null and different from existing
-    if old_value != raw_new_value and raw_new_value:
-        wof['properties'][attr_name] = formatter(raw_new_value)
+    if old_value != raw_new_value:
+        if raw_new_value not in ([], ""):
+            new_value = formatter(raw_new_value)
+            wof['properties'][attr_name] = new_value
+        elif old_value is not None:
+            del wof['properties'][attr_name]
 
 
 def build_wof_repo_name(wof):
@@ -206,14 +210,18 @@ def edit_place(wof_id):
         apply_change(wof_doc, request.form, "mz:max_zoom", maybe_float)
         apply_change(wof_doc, request.form, "lbl:min_zoom", maybe_float)
         apply_change(wof_doc, request.form, "lbl:max_zoom", maybe_float)
-        apply_change(wof_doc, request.form, "wof:lang_x_spoken")
-        apply_change(wof_doc, request.form, "wof:lang_x_official")
+        apply_change(wof_doc, request.form, "wof:lang_x_spoken", list_of_str)
+        apply_change(wof_doc, request.form, "wof:lang_x_official", list_of_str)
         apply_change(wof_doc, request.form, "iso:country")
 
-        for k, v in filter(lambda i: i[0].startswith('name:'), request.form):
+        for k in filter(lambda i: i.startswith('name:'), request.form.keys()):
+            apply_change(wof_doc, request.form, k, list_of_str)
+        for k in filter(lambda i: i.startswith('name:'), wof_doc['properties'].keys()):
             apply_change(wof_doc, request.form, k, list_of_str)
 
-        for k, v in filter(lambda i: i[0].startswith('label:'), request.form):
+        for k in filter(lambda i: i.startswith('label:'), request.form.keys()):
+            apply_change(wof_doc, request.form, k, list_of_str)
+        for k in filter(lambda i: i.startswith('label:'), wof_doc['properties'].keys()):
             apply_change(wof_doc, request.form, k, list_of_str)
 
         # Validate those changes with the WOF validator code
