@@ -52,36 +52,64 @@ $(document).ready(function() {
 
     // Set up a filter to pick which languages to show
     $("#alternate-names-selected").tagify({
-        enforceWhitelist: true,
+        pattern: /^[a-z]{3}$/,
         whitelist: {{ localized_names.keys()|list|tojson }},
         dropdown: {
             enabled: 0,
         }
     }).on("add", function(e, tag) {
-        $(".localized-names-row[data-lang=\"" + tag.data.value + "\"]").show();
+        var lang = tag.data.value;
+        var existing = $(".localized-names-row[data-lang=\"" + lang + "\"]").first()
+        if (existing.length > 0) {
+            existing.show();
+        } else {
+            var newBlock = $("#localized-names-row-template").clone();
+            newBlock.data("lang", lang);
+            newBlock.find("div h4").text(lang);
+            newBlock.find("div small code").text(lang);
+            newBlock.find("input.form-control").attr("name", function(e) {
+                return "label:" + lang + "_x_" + $(this).data("spec");
+            });
+            newBlock.show();
+            newBlock.find("input.form-control").tagify();
+            newBlock.insertAfter($(".localized-names-row").last());
+        }
     }).on("remove", function(e, tag) {
         $(".localized-names-row[data-lang=\"" + tag.data.value + "\"]").hide();
     });
 
     // Default to showing English only
-    $(".localized-names-row").hide();
     $("#alternate-names-selected").data("tagify").addTags("eng");
 
     // Set up a filter to pick which languages to show
     $("#localized-labels-selected").tagify({
-        enforceWhitelist: true,
+        pattern: /^[a-z]{3}$/,
         whitelist: {{ localized_labels.keys()|list|tojson }},
         dropdown: {
             enabled: 0,
         }
     }).on("add", function(e, tag) {
-        $(".localized-labels-row[data-lang=\"" + tag.data.value + "\"]").show();
+        var lang = tag.data.value;
+        var existing = $(".localized-labels-row[data-lang=\"" + lang + "\"]").first()
+        if (existing.length > 0) {
+            existing.show();
+        } else {
+            var newBlock = $("#localized-labels-row-template").clone();
+            newBlock.data("lang", lang);
+            newBlock.find("div h4").text(lang);
+            newBlock.find("div small code").text(lang);
+            newBlock.find("input.form-control").attr("name", function(e) {
+                return "label:" + lang + "_x_" + $(this).data("spec");
+            });
+            newBlock.show();
+            newBlock.find("input.form-control").tagify();
+            newBlock.insertAfter($(".localized-labels-row").last());
+        }
     }).on("remove", function(e, tag) {
         $(".localized-labels-row[data-lang=\"" + tag.data.value + "\"]").hide();
     });
 
     // Default to showing English only
-    $(".localized-labels-row").hide();
     $("#localized-labels-selected").data("tagify").addTags("eng");
 
     // Perform validation before submitting form
@@ -225,17 +253,30 @@ $(document).ready(function() {
         <div class="row localized-names-row" data-lang="{{ lang }}" style="display: none;">
             <div class="col-md-2"><h4>{{ lang|expand_lang }}</h4><small>(<code>{{ lang }}</code>)</small></div>
             <div class="col-md-10">
-                {%- for spec in name_specs.keys() %}
+                {%- for spec, expanded_spec in name_specs.items() %}
                 <div class="form-group row">
-                    <label class="col-md-2 col-form-label">{{ spec|expand_spec }}</label>
+                    <label class="col-md-2 col-form-label">{{ expanded_spec }}</label>
                     <div class="col-md-10">
-                        <input name="name:{{ lang }}_x_{{ spec }}" data-type="{{ spec }}" data-lang="{{ lang }}" class="form-control use-tagify" value='{{ (localized_names[lang][spec] or [])|tojson }}' />
+                        <input name="name:{{ lang }}_x_{{ spec }}" data-spec="{{ spec }}" class="form-control use-tagify" value='{{ (localized_names[lang][spec] or [])|tojson }}' />
                     </div>
                 </div>
                 {%- endfor %}
             </div>
         </div>
         {%- endfor %}
+        <div id="localized-names-row-template" class="row localized-names-row" data-lang="" style="display: none;">
+            <div class="col-md-2"><h4></h4><small>(<code></code>)</small></div>
+            <div class="col-md-10">
+                {%- for spec, expanded_spec in name_specs.items() %}
+                <div class="form-group row">
+                    <label class="col-md-2 col-form-label">{{ expanded_spec }}</label>
+                    <div class="col-md-10">
+                        <input name="" data-spec="{{ spec }}" class="form-control" value="" />
+                    </div>
+                </div>
+                {%- endfor %}
+            </div>
+        </div>
     </div>
 
     <h4>Localized Labels</h4>
@@ -248,17 +289,30 @@ $(document).ready(function() {
         <div class="row localized-labels-row" data-lang="{{ lang }}" style="display: none;">
             <div class="col-md-2"><h4>{{ lang|expand_lang }}</h4><small>(<code>{{ lang }}</code>)</small></div>
             <div class="col-md-10">
-                {%- for spec in label_specs.keys() %}
+                {%- for spec, expanded_spec in label_specs.items() %}
                 <div class="form-group row">
-                    <label class="col-md-2 col-form-label">{{ spec|expand_spec }}</label>
+                    <label class="col-md-2 col-form-label">{{ expanded_spec }}</label>
                     <div class="col-md-10">
-                        <input name="label:{{ lang }}_x_{{ spec }}" data-type="{{ spec }}" data-lang="{{ lang }}" class="form-control use-tagify" value='{{ (localized_labels[lang][spec] or [])|tojson }}' />
+                        <input name="label:{{ lang }}_x_{{ spec }}" data-spec="{{ spec }}" class="form-control use-tagify" value='{{ (localized_labels[lang][spec] or [])|tojson }}' />
                     </div>
                 </div>
                 {%- endfor %}
             </div>
         </div>
         {%- endfor %}
+        <div id="localized-labels-row-template" class="row localized-labels-row" data-lang="" style="display: none;">
+            <div class="col-md-2"><h4></h4><small>(<code></code>)</small></div>
+            <div class="col-md-10">
+                {%- for spec, expanded_spec in label_specs.items() %}
+                <div class="form-group row">
+                    <label class="col-md-2 col-form-label">{{ expanded_spec }}</label>
+                    <div class="col-md-10">
+                        <input name="" data-spec="{{ spec }}" class="form-control" value="" />
+                    </div>
+                </div>
+                {%- endfor %}
+            </div>
+        </div>
     </div>
 
     <div class="form-group">
