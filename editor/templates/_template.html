@@ -1,47 +1,88 @@
-{%- extends "bootstrap/base.html" %}
-{% import "bootstrap/utils.html" as util %}
+{% macro flashed_messages(messages=None, container=True, transform={
+    'critical': 'danger',
+    'error': 'danger',
+    'info': 'info',
+    'warning': 'warning',
+    'debug': 'info',
+    'notset': 'info',
+    'message': 'info',
+  }, default_category=None, dismissible=False) -%}
+{% with messages = messages or get_flashed_messages(with_categories=True) -%}
+{% if container -%}
+<!-- begin message block -->
+<div id="flash-container" class="container flashed-messages">
+    <div class="row">
+        <div class="col-md-12">
+{% endif -%}
 
-{%- block head %}
-<meta charset="utf-8">
-<meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-{{ super() }}
-{%- endblock %}
+{% for cat, msg in messages %}          <div class="alert alert-{{transform.get(cat.lower(), default_category or cat)}}{% if dismissible %} alert-dismissible{% endif %}" role="alert">
+{% if dismissible %}                <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>{% endif %}
+        {{msg}}
+            </div>
+{%- endfor -%}
 
-{%- block title %}Who's On First Editor{%- endblock %}
-
-{%- block navbar %}
-<nav class="navbar navbar-default">
-    <div class="container-fluid">
-        <div class="navbar-header">
-            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-                <span class="sr-only">Toggle navigation</span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-            </button>
-            <a class="navbar-brand" href="#">Who's On First Editor</a>
+{% if container %}
         </div>
-        <div id="navbar" class="navbar-collapse collapse">
-            <ul class="nav navbar-nav navbar-right">
-                {% if current_user.is_anonymous %}
-                <li><a href="{{ url_for('auth.login') }}">Login</a></li>
-                {% else %}
-                <li><a href="https://github.com/{{ session.username }}">{{ session.username }}</a></li>
-                <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
-                {% endif %}
-            </ul>
-        </div><!--/.nav-collapse -->
     </div>
-</nav>
-{%- endblock %}
-
-{%- block body %}
-<div class="container">
-{{ super() }}
 </div>
-{%- endblock %}
+<!-- end message block -->
+{% endif -%}
 
-{%- block content %}
-{{ util.flashed_messages(dismissible=True, container=False) }}
-{%- block page %}{% endblock %}
-{%- endblock %}
+{% endwith -%}
+{% endmacro -%}
+
+
+{% block doc -%}
+<!DOCTYPE html>
+<html{% block html_attribs %}{% endblock html_attribs %}>
+    {%- block html %}
+    <head>
+        {%- block head %}
+        <title>{% block title %}Who's On First Editor{% endblock title %}</title>
+
+        {%- block metas %}
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        {%- endblock metas %}
+
+        {%- block styles %}
+        <link href="https://unpkg.com/bootstrap@4.4.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="">
+        {%- endblock styles %}
+        {%- endblock head %}
+    </head>
+    <body{% block body_attribs %}{% endblock body_attribs %}>
+        {% block body -%}
+        {% block navbar %}
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <a class="navbar-brand" href="#">Who's On First Editor</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div id="navbarNav" class="collapse navbar-collapse">
+                <ul class="navbar-nav mr-auto">
+                    {% if current_user.is_anonymous %}
+                    <li><a href="{{ url_for('auth.login') }}">Login</a></li>
+                    {% else %}
+                    <li><a href="https://github.com/{{ session.username }}">{{ session.username }}</a></li>
+                    <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
+                    {% endif %}
+                </ul>
+            </div><!--/.nav-collapse -->
+        </nav>
+        {%- endblock navbar %}
+        <div class="container">
+        {{ flashed_messages(dismissible=True, container=True) }}
+        {% block content -%}
+        {%- endblock content %}
+        </div>
+
+        {% block scripts %}
+        <script src="https://unpkg.com/jquery@3.4.1/dist/jquery.min.js" integrity="sha384-vk5WoKIaW/vJyUAd9n/wmopsmNhiy+L2Z+SBxGYnUkunIxVxAv/UtMOhba/xskxh" crossorigin=""></script>
+        <script src="https://unpkg.com/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin=""></script>
+        <script src="https://unpkg.com/bootstrap@4.4.1/dist/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin=""></script>
+        {%- endblock scripts %}
+        {%- endblock body %}
+    </body>
+{%- endblock html %}
+</html>
+{% endblock doc -%}
