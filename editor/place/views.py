@@ -21,23 +21,26 @@ from flask import (
 )
 
 
-spec_expansion = {
-    "colloquial_abbreviation": "Colloquial Abbrev.",
+name_specs = {
     "colloquial": "Colloquial",
     "historical": "Historical",
+    "preferred": "Preferred",
+    "unknown": "Unknown",
+    "variant": "Variant",
+}
+label_specs = {
+    "colloquial_abbreviation": "Colloquial Abbrev.",
     "preferred_abbreviation": "Preferred Abbrev.",
     "preferred_disambiguation": "Preferred Disambiguation",
     "preferred_longname": "Preferred Longname",
     "preferred_placetype": "Preferred Placetype",
     "preferred_shortcode": "Preferred Shortcode",
-    "preferred": "Preferred",
-    "unknown": "Unknown",
     "variant_abbreviation": "Variant Abbrev.",
     "variant_disambiguation": "Variant Disambiguation",
     "variant_longname": "Variant Longname",
     "variant_shortcode": "Variant Shortcode",
-    "variant": "Variant",
 }
+spec_expansion = dict(**name_specs, **label_specs)
 lang_expansion = {
     'ara': 'Arabic',
     'ara_AE': 'Arabic (UAE)',
@@ -440,6 +443,8 @@ def edit_place(wof_id):
     return render_template(
         'place/edit.html',
         wof_doc=wof_doc,
+        name_specs=name_specs,
         localized_names=localized_names,
+        label_specs=label_specs,
         localized_labels=localized_labels,
     )

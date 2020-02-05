@@ -220,16 +220,16 @@ $(document).ready(function() {
         <label for="alternate-names-selected">Filter</label>
         <input type="text" class="form-control" id="alternate-names-selected">
     </div>
-    <div class="form-group" id="alternate-names-placeholder">
+    <div class="form-group">
         {%- for lang, specs in localized_names.items() %}
-        <div class="row localized-names-row" data-lang="{{ lang }}">
+        <div class="row localized-names-row" data-lang="{{ lang }}" style="display: none;">
             <div class="col-md-2"><h4>{{ lang|expand_lang }}</h4><small>(<code>{{ lang }}</code>)</small></div>
             <div class="col-md-10">
-                {%- for spec, v in specs.items() %}
+                {%- for spec in name_specs.keys() %}
                 <div class="form-group row">
                     <label class="col-md-2 col-form-label">{{ spec|expand_spec }}</label>
                     <div class="col-md-10">
-                        <input name="name:{{ lang }}_x_{{ spec }}" data-type="{{ spec }}" data-lang="{{ lang }}" class="form-control use-tagify" value='{{ v|tojson }}' />
+                        <input name="name:{{ lang }}_x_{{ spec }}" data-type="{{ spec }}" data-lang="{{ lang }}" class="form-control use-tagify" value='{{ (localized_names[lang][spec] or [])|tojson }}' />
                     </div>
                 </div>
                 {%- endfor %}
@@ -243,16 +243,16 @@ $(document).ready(function() {
         <label for="localized-labels-selected">Filter</label>
         <input type="text" class="form-control" id="localized-labels-selected">
     </div>
-    <div class="form-group" id="alternate-names-placeholder">
+    <div class="form-group">
         {%- for lang, specs in localized_labels.items() %}
-        <div class="row localized-labels-row" data-lang="{{ lang }}">
+        <div class="row localized-labels-row" data-lang="{{ lang }}" style="display: none;">
             <div class="col-md-2"><h4>{{ lang|expand_lang }}</h4><small>(<code>{{ lang }}</code>)</small></div>
             <div class="col-md-10">
-                {%- for spec, v in specs.items() %}
+                {%- for spec in label_specs.keys() %}
                 <div class="form-group row">
                     <label class="col-md-2 col-form-label">{{ spec|expand_spec }}</label>
                     <div class="col-md-10">
-                        <input name="label:{{ lang }}_x_{{ spec }}" data-type="{{ spec }}" data-lang="{{ lang }}" class="form-control use-tagify" value='{{ v|tojson }}' />
+                        <input name="label:{{ lang }}_x_{{ spec }}" data-type="{{ spec }}" data-lang="{{ lang }}" class="form-control use-tagify" value='{{ (localized_labels[lang][spec] or [])|tojson }}' />
                     </div>
                 </div>
                 {%- endfor %}
