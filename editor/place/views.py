@@ -130,16 +130,29 @@ def parse_prefix_map(properties, prefix):
     return output
 
 
+class ValidationException(Exception):
+    pass
+
+
 def maybe_float(i):
-    return float(i) if i else None
+    try:
+        return float(i) if i else None
+    except ValueError:
+        raise ValidationException("field must be a floating point number")
 
 
 def maybe_int(i):
-    return int(i) if i else None
+    try:
+        return int(i) if i else None
+    except ValueError:
+        raise ValidationException("field must be an integer")
 
 
 def list_of_str(i):
-    return [v['value'] for v in json.loads(i)] if i else None
+    try:
+        return [v['value'] for v in json.loads(i)] if i else None
+    except json.decoder.JSONDecodeError:
+        raise ValidationException("field must be a JSON-formatted array")
 
 
 def apply_change(wof, form, attr_name, formatter=str):
@@ -148,7 +161,11 @@ def apply_change(wof, form, attr_name, formatter=str):
 
     if old_value != raw_new_value:
         if raw_new_value not in ([], ""):
-            new_value = formatter(raw_new_value)
+            try:
+                new_value = formatter(raw_new_value)
+            except ValidationException as e:
+                raise ValidationException("Error in field %s: %s" % (attr_name, e))
+
             wof['properties'][attr_name] = new_value
         elif old_value is not None:
             del wof['properties'][attr_name]
@@ -196,33 +213,37 @@ def edit_place(wof_id):
     if request.method == 'POST':
 
         # Consume the changes from the form
-        apply_change(wof_doc, request.form, "wof:name")
-        apply_change(wof_doc, request.form, "wof:shortcode")
-        apply_change(wof_doc, request.form, "mz:is_current")
-        apply_change(wof_doc, request.form, "mz:is_funky")
-        apply_change(wof_doc, request.form, "mz:hierarchy_label")
-        apply_change(wof_doc, request.form, "edtf:cessation")
-        apply_change(wof_doc, request.form, "edtf:deprecated")
-        apply_change(wof_doc, request.form, "edtf:inception")
-        apply_change(wof_doc, request.form, "edtf:superseded")
-        apply_change(wof_doc, request.form, "wof:population", maybe_int)
-        apply_change(wof_doc, request.form, "mz:min_zoom", maybe_float)
-        apply_change(wof_doc, request.form, "mz:max_zoom", maybe_float)
-        apply_change(wof_doc, request.form, "lbl:min_zoom", maybe_float)
-        apply_change(wof_doc, request.form, "lbl:max_zoom", maybe_float)
-        apply_change(wof_doc, request.form, "wof:lang_x_spoken", list_of_str)
-        apply_change(wof_doc, request.form, "wof:lang_x_official", list_of_str)
-        apply_change(wof_doc, request.form, "iso:country")
+        try:
+            apply_change(wof_doc, request.form, "wof:name")
+            apply_change(wof_doc, request.form, "wof:shortcode")
+            apply_change(wof_doc, request.form, "mz:is_current", maybe_int)
+            apply_change(wof_doc, request.form, "mz:is_funky", maybe_int)
+            apply_change(wof_doc, request.form, "mz:hierarchy_label")
+            apply_change(wof_doc, request.form, "edtf:cessation")
+            apply_change(wof_doc, request.form, "edtf:deprecated")
+            apply_change(wof_doc, request.form, "edtf:inception")
+            apply_change(wof_doc, request.form, "edtf:superseded")
+            apply_change(wof_doc, request.form, "wof:population", maybe_int)
+            apply_change(wof_doc, request.form, "mz:min_zoom", maybe_float)
+            apply_change(wof_doc, request.form, "mz:max_zoom", maybe_float)
+            apply_change(wof_doc, request.form, "lbl:min_zoom", maybe_float)
+            apply_change(wof_doc, request.form, "lbl:max_zoom", maybe_float)
+            apply_change(wof_doc, request.form, "wof:lang_x_spoken", list_of_str)
+            apply_change(wof_doc, request.form, "wof:lang_x_official", list_of_str)
+            apply_change(wof_doc, request.form, "iso:country")
 
-        for k in filter(lambda i: i.startswith('name:'), request.form.keys()):
-            apply_change(wof_doc, request.form, k, list_of_str)
-        for k in filter(lambda i: i.startswith('name:'), wof_doc['properties'].keys()):
-            apply_change(wof_doc, request.form, k, list_of_str)
+            for k in filter(lambda i: i.startswith('name:'), request.form.keys()):
+                apply_change(wof_doc, request.form, k, list_of_str)
+            for k in filter(lambda i: i.startswith('name:'), wof_doc['properties'].keys()):
+                apply_change(wof_doc, request.form, k, list_of_str)
 
-        for k in filter(lambda i: i.startswith('label:'), request.form.keys()):
-            apply_change(wof_doc, request.form, k, list_of_str)
-        for k in filter(lambda i: i.startswith('label:'), wof_doc['properties'].keys()):
-            apply_change(wof_doc, request.form, k, list_of_str)
+            for k in filter(lambda i: i.startswith('label:'), request.form.keys()):
+                apply_change(wof_doc, request.form, k, list_of_str)
+            for k in filter(lambda i: i.startswith('label:'), wof_doc['properties'].keys()):
+                apply_change(wof_doc, request.form, k, list_of_str)
+        except ValidationException as e:
+            flash("Problem validating changes: %s" % e)
+            return redirect(request.url)
 
         # Validate those changes with the WOF validator code
         validator = mapzen.whosonfirst.validator.validator()
