@@ -48,7 +48,7 @@ $(document).ready(function() {
     });
 
     $('input.wof-input[data-wof-type="list"]').tagify();
-    $(".use-tagify").tagify();
+    $(".use-tagify").tagify({delimiters: null});
 
     // Set up a filter to pick which languages to show
     $("#alternate-names-selected").tagify({
@@ -68,7 +68,7 @@ $(document).ready(function() {
                 return "label:" + lang + "_x_" + $(this).data("spec");
             });
             newBlock.show();
-            newBlock.find("input.form-control").tagify();
+            newBlock.find("input.form-control").tagify({delimiters: null});
             newBlock.insertAfter($(".localized-names-row").last());
         }
     }).on("remove", function(e, tag) {
@@ -97,7 +97,7 @@ $(document).ready(function() {
                 return "label:" + lang + "_x_" + $(this).data("spec");
             });
             newBlock.show();
-            newBlock.find("input.form-control").tagify();
+            newBlock.find("input.form-control").tagify({delimiters: null});
             newBlock.insertAfter($(".localized-labels-row").last());
         }
     }).on("remove", function(e, tag) {
