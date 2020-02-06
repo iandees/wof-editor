@@ -53,25 +53,27 @@
     </head>
     <body{% block body_attribs %}{% endblock body_attribs %}>
         {% block body -%}
-        {% block navbar %}
-        <nav class="navbar navbar-expand-lg navbar-light bg-light">
-            <a class="navbar-brand" href="#">Who's On First Editor</a>
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div id="navbarNav" class="collapse navbar-collapse">
-                <ul class="navbar-nav mr-auto">
+        <div class="container">
+            {% block navbar %}
+            <nav class="navbar navbar-expand-sm navbar-light bg-light justify-content-end">
+                <a class="navbar-brand" href="#">Who's On First Editor</a>
+                <span class="ml-auto"></span>
+                <ul class="navbar-nav text-right">
                     {% if current_user.is_anonymous %}
-                    <li><a href="{{ url_for('auth.login') }}">Login</a></li>
+                    <li class="nav-item active">
+                        <a class="nav-link" href="{{ url_for('auth.login') }}">Login</a>
+                    </li>
                     {% else %}
-                    <li><a href="https://github.com/{{ session.username }}">{{ session.username }}</a></li>
-                    <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://github.com/{{ session.username }}">{{ session.username }}</a>
+                    </li>
+                    <li class="nav-item active">
+                        <a class="nav-link" href="{{ url_for('auth.logout') }}">Logout</a>
+                    </li>
                     {% endif %}
                 </ul>
-            </div><!--/.nav-collapse -->
-        </nav>
-        {%- endblock navbar %}
-        <div class="container">
+            </nav>
+            {%- endblock navbar %}
         {{ flashed_messages(dismissible=True, container=True) }}
         {% block content -%}
         {%- endblock content %}
