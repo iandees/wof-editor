@@ -127,7 +127,7 @@ $(document).ready(function() {
 {%- endblock %}
 
 {%- block content %}
-<h3>Editing {{ wof_doc.properties['wof:name'] }}</h3>
+<h3>Editing {{ wof_doc.properties['wof:name'] }}</h3><small>(<a href="https://spelunker.whosonfirst.org/id/{{ wof_doc.id }}/">View on Spelunker</a>)</small>
 
 <form class="needs-validation" novalidate method="POST">
     <!-- https://github.com/whosonfirst/whosonfirst-properties/blob/master/properties/wof/name.json -->
