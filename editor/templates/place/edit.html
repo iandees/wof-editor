@@ -236,7 +236,7 @@ $(document).ready(function() {
     <!-- https://github.com/whosonfirst/whosonfirst-properties/blob/master/properties/iso/country.json -->
     <div class="form-group">
         <label for="iso-country">ISO Country Code</label>&nbsp;<small>(<code>iso:country</code>)</small>
-        <input type="text" class="form-control wof-input" name="iso:country" data-wof-validation-regex="^[A-Za-z]{2}$" value="{{ wof_doc.properties['iso:country'] }}">
+        <input type="text" disabled class="form-control wof-input" name="iso:country" data-wof-validation-regex="^[A-Za-z]{2}$" value="{{ wof_doc.properties['iso:country'] }}">
         <small id="iso-country-help" class="form-text text-muted">The two-letter country code from ISO 3166-1.</small>
     </div>
 

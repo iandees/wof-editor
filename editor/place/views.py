@@ -272,7 +272,6 @@ def edit_place(wof_id):
             apply_change(wof_doc, request.form, "lbl:max_zoom", maybe_float)
             apply_change(wof_doc, request.form, "wof:lang_x_spoken", list_of_str)
             apply_change(wof_doc, request.form, "wof:lang_x_official", list_of_str)
-            apply_change(wof_doc, request.form, "iso:country")
 
             for k in filter(lambda i: i.startswith('name:'), request.form.keys()):
                 apply_change(wof_doc, request.form, k, list_of_str)
