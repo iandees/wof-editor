@@ -3,6 +3,7 @@ import collections
 import io
 import json
 import mapzen.whosonfirst.validator
+import os
 import random
 import requests
 import string
@@ -16,6 +17,7 @@ from flask import (
     redirect,
     render_template,
     request,
+    send_from_directory,
     session,
     url_for,
 )
@@ -97,6 +99,16 @@ def expand_lang(lang):
 @place_bp.route('/')
 def root_page():
     return render_template('place/index.html')
+
+
+@place_bp.route('/favicon-32x32.png')
+def favicon():
+    print(os.path.join(current_app.root_path, 'static', 'favicon'))
+    return send_from_directory(
+        os.path.join(current_app.root_path, 'static', 'favicon'),
+        'favicon-32x32.png',
+        mimetype='image/png',
+    )
 
 
 def log_response(resp):
