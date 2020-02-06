@@ -118,6 +118,7 @@ $(document).ready(function() {
             $("#flash-container").append('<div class="row"><div class="col-md-12"><div class="alert alert-danger alert-dismissible" role="alert">' +
                 '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>' +
                 'Some changes were not valid. Please check for errors below.</div></div></div>');
+            $("html, body").scrollTop(0);
 
             e.preventDefault();
         }
