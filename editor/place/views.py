@@ -184,7 +184,7 @@ def apply_change(wof, form, attr_name, formatter=None):
             try:
                 new_value = formatter(new_value)
             except ValidationException as e:
-                raise ValidationException("Error in field %s: %s" % (attr_name, e))
+                raise ValidationException("Error in field %s (%s)" % (attr_name, e))
 
             wof['properties'][attr_name] = new_value
         elif old_value is not None:
