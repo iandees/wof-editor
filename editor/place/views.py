@@ -100,18 +100,22 @@ def root_page():
 
 
 def log_response(resp):
-    return "{req_method} {req_url} (data {req_body}) results in HTTP {res_status} (data {res_body})".format(
-        req_method=resp.request.method,
-        req_url=resp.request.url,
-        req_body=resp.request.body[:500] if resp.request.body else "<none>",
-        res_status=resp.status_code,
-        res_body=resp.content[:500] if resp.content else "<none>",
-    )
+    return json.dumps({
+        "request": {
+            "method": resp.request.method,
+            "url": resp.request.url,
+            "body": resp.request.body[:500] if resp.request.body else None,
+        },
+        "response": {
+            "status": resp.status_code,
+            "body": resp.content[:500] if resp.content else None,
+        }
+    })
 
 
 def build_wof_doc_url_suffix(wof_id):
     id_url_str = str(wof_id)
-    id_url_prefix = '/'.join(id_url_str[x:x+3] for x in range(0, len(id_url_str), 3))
+    id_url_prefix = '/'.join(id_url_str[x:x + 3] for x in range(0, len(id_url_str), 3))
 
     return id_url_prefix + "/" + id_url_str + ".geojson"
 
@@ -287,10 +291,21 @@ def edit_place(wof_id):
         sess.headers['Authorization'] = ('token ' + session.get('access_token'))
 
         # Get the sha1 of `master` branch
-        resp = sess.get('https://api.github.com/repos/%s/git/ref/%s' % (base_repo, base_ref))
+        resp = sess.get(
+            'https://api.github.com/repos/%s/git/ref/%s' % (base_repo, base_ref),
+        )
         current_app.logger.warn(log_response(resp))
-        data = resp.json()
-        base_ref_sha = data['object']['sha']
+
+        if resp.status_code == 200:
+            base_ref_sha = resp.json()['object']['sha']
+            current_app.logger.warn(
+                "sha of the base ref %s in repo %s is %s",
+                base_ref,
+                base_repo,
+                base_ref_sha,
+            )
+        else:
+            return "couldn't get base ref sha", 500
 
         # Create a branch from that sha1
         resp = sess.post(
@@ -322,22 +337,28 @@ def edit_place(wof_id):
                     fork_repo,
                 )
 
-                # Wait for the fork to be created
                 for t in range(3):
-                    resp = sess.get(
-                        'https://api.github.com/repos/%s' % (fork_repo,),
+                    # Try creating the branch in the fork
+                    resp = sess.post(
+                        'https://api.github.com/repos/%s/git/refs' % (fork_repo,),
+                        json={
+                            'ref': 'refs/heads/%s' % branch_name,
+                            'sha': base_ref_sha,
+                        }
                     )
+                    current_app.logger.warn(log_response(resp))
 
-                    if resp.status_code == 200:
+                    if resp.status_code == 201:
                         write_repo = fork_repo
                         current_app.logger.warn(
-                            "Fork finished after %s checks",
-                            t,
+                            "Branch %s created on forked repo %s",
+                            branch_name,
+                            fork_repo,
                         )
                         break
                     else:
                         current_app.logger.warn(
-                            "Fork isn't there yet at try %s, waiting 500ms and trying again",
+                            "Couldn't create branch at try %s, waiting 500ms and trying again",
                             t,
                         )
                         time.sleep(0.5)
@@ -345,23 +366,6 @@ def edit_place(wof_id):
             else:
                 current_app.logger.warn("Couldn't start fork creation.")
                 return "can't create fork", 500
-
-            # Try creating the branch in the fork
-            resp = sess.post(
-                'https://api.github.com/repos/%s/git/refs' % (fork_repo,),
-                json={
-                    'ref': 'refs/heads/%s' % branch_name,
-                    'sha': base_ref_sha,
-                }
-            )
-            current_app.logger.warn(log_response(resp))
-
-            if resp.status_code == 201:
-                current_app.logger.warn(
-                    "Branch %s created on forked repo %s",
-                    branch_name,
-                    fork_repo,
-                )
 
         elif resp.status_code == 201:
             write_repo = base_repo
@@ -372,47 +376,96 @@ def edit_place(wof_id):
                 base_repo,
             )
 
-        # Now that we have a branch that we can write to, update the file on it
-        resp = sess.get(
-            'https://api.github.com/repos/%s/contents/%s' % (write_repo, file_path),
+        # Create a 'blob' with the contents of the updated file
+        file_content_b64 = base64.standard_b64encode(exportified_wof_doc.encode('utf8')).decode('utf8')
+        resp = sess.post(
+            'https://api.github.com/repos/%s/git/blobs' % (write_repo,),
+            json={
+                "content": file_content_b64,
+                "encoding": "base64",
+            }
         )
 
         current_app.logger.warn(log_response(resp))
-        if resp.status_code == 200:
-            existing_file_sha = resp.json()['sha']
+        if resp.status_code == 201:
+            new_blob_sha = resp.json()['sha']
             current_app.logger.warn(
-                "Will update file %s with sha %s in repo %s",
-                file_path,
-                existing_file_sha,
+                "Created new blob with updated data in repo %s, sha %s",
                 write_repo,
+                new_blob_sha,
             )
         else:
-            return "couldn't find existing file %s in %s" % (file_path, write_repo), 500
+            current_app.logger.warn("Couldn't create new blob")
+            return "couldn't create new blob", 500
 
-        file_content_b64 = base64.standard_b64encode(exportified_wof_doc.encode('utf8')).decode('utf8')
+        # Create a 'tree' with the blob above attached to it
+        resp = sess.post(
+            'https://api.github.com/repos/%s/git/trees' % (write_repo,),
+            json={
+                "base_tree": base_ref_sha,
+                "tree": [{
+                    "path": file_path,
+                    "mode": "100644",
+                    "type": "blob",
+                    "sha": new_blob_sha,
+                }]
+            }
+        )
 
-        resp = sess.put(
-            'https://api.github.com/repos/%s/contents/%s' % (write_repo, file_path),
+        current_app.logger.warn(log_response(resp))
+        if resp.status_code == 201:
+            new_tree_sha = resp.json()['sha']
+            current_app.logger.warn(
+                "Created new tree with changed data for file %s attached in repo %s, sha %s",
+                file_path,
+                write_repo,
+                new_tree_sha,
+            )
+        else:
+            current_app.logger.warn("Couldn't create new tree")
+            return "couldn't create new tree", 500
+
+        # Create a new 'commit' that attaches the tree created above to the branch
+        resp = sess.post(
+            'https://api.github.com/repos/%s/git/commits' % (write_repo,),
             json={
                 "message": "Updating %s" % place_name,
-                "content": file_content_b64,
-                "branch": branch_name,
-                "sha": existing_file_sha,
+                "tree": new_tree_sha,
+                "parents": [base_ref_sha],
+            }
+        )
+
+        current_app.logger.warn(log_response(resp))
+        if resp.status_code == 201:
+            new_commit_sha = resp.json()['sha']
+            current_app.logger.warn(
+                "Created new commit with data for file %s attached in repo %s, sha %s",
+                file_path,
+                write_repo,
+                new_commit_sha,
+            )
+        else:
+            current_app.logger.warn("Couldn't create new commit")
+            return "couldn't create new commit", 500
+
+        # Update the reference of the branch to this new commit
+        resp = sess.patch(
+            'https://api.github.com/repos/%s/git/refs/heads/%s' % (write_repo, branch_name),
+            json={
+                "sha": new_commit_sha,
             }
         )
 
         current_app.logger.warn(log_response(resp))
         if resp.status_code == 200:
             current_app.logger.warn(
-                "File %s was updated in repo %s on branch %s, commit %s",
-                file_path,
-                write_repo,
+                "Updated ref %s with commit %s",
                 branch_name,
-                resp.json()['commit']['sha'],
+                new_commit_sha,
             )
-
         else:
-            return "couldn't update file on branch", 500
+            current_app.logger.warn("Couldn't update ref")
+            return "couldn't update ref", 500
 
         # We've created a file, now let's create the pull request
         resp = sess.post(
