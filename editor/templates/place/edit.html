@@ -143,25 +143,25 @@ $(document).ready(function() {
     <!-- https://github.com/whosonfirst/whosonfirst-properties/blob/master/properties/wof/shortcode.json -->
     <div class="form-group">
         <label for="wof-shortcode">Shortcode</label>&nbsp;<small>(<code>wof:shortcode</code>)</small>
-        <input type="text" class="form-control wof-input" name="wof:shortcode" value="{{ wof_doc.properties['wof:shortcode'] }}">
+        <input type="text" class="form-control wof-input" name="wof:shortcode" data-wof-validation-regex="^$" value="{{ wof_doc.properties['wof:shortcode'] }}">
         <small id="wof-shortcode-help" class="form-text text-muted">A two or three character alphabetic code, preferring three characters for country, two characters for region, and either two or three characters for county.</small>
     </div>
     <!-- https://github.com/whosonfirst/whosonfirst-properties/blob/master/properties/mz/is_current.json -->
     <div class="form-group">
         <label for="mz-is_current">Is Current</label>&nbsp;<small>(<code>mz:is_current</code>)</small>
-        <input type="text" class="form-control wof-input" name="mz:is_current" data-wof-validation-regex="^\d+$" value="{{ wof_doc.properties['mz:is_current'] }}">
+        <input type="text" class="form-control wof-input" name="mz:is_current" data-wof-validation-regex="^(-1|0|1)$" value="{{ wof_doc.properties['mz:is_current'] }}">
         <small id="mz-is_current-help" class="form-text text-muted"></small>
     </div>
     <!-- https://github.com/whosonfirst/whosonfirst-properties/blob/master/properties/mz/is_funky.json -->
     <div class="form-group">
         <label for="mz-is_funky">Disabled</label>&nbsp;<small>(<code>mz:is_funky</code>)</small>
-        <input type="text" class="form-control wof-input" name="mz:is_funky" value="{{ wof_doc.properties['mz:is_funky'] }}">
+        <input type="text" class="form-control wof-input" name="mz:is_funky" data-wof-validation-regex="^(-1|0|1)$" value="{{ wof_doc.properties['mz:is_funky'] }}">
         <small id="mz-is_funky-help" class="form-text text-muted">Used when Mapzen suspects the record is bad or inappropriate but additional confirmation is needed before the feature is deprecated. Records with a 1 value are recommended to be hidden from map display and search unless explicitly asked for by name.</small>
     </div>
     <!-- https://github.com/whosonfirst/whosonfirst-properties/blob/master/properties/mz/hierarchy_label.json -->
     <div class="form-group">
         <label for="mz-hierarchy_label">Include in Hierarchy Label</label>&nbsp;<small>(<code>mz:hierarchy_label</code>)</small>
-        <input type="text" class="form-control wof-input" name="mz:hierarchy_label" value="{{ wof_doc.properties['mz:hierarchy_label'] }}">
+        <input type="text" class="form-control wof-input" name="mz:hierarchy_label" data-wof-validation-regex="^(-1|0|1)$" value="{{ wof_doc.properties['mz:hierarchy_label'] }}">
         <small id="mz-hierarchy_label-help" class="form-text text-muted">Used when generating place labels in geocoding software, like Pelias; this property defaults to True unless it is set to 0 manually. When Pelias decorates an address string, the hierarchy_label property is used to determine what is included in that address string.</small>
     </div>
     <!-- https://github.com/whosonfirst/whosonfirst-properties/blob/master/properties/edtf/cessation.json -->

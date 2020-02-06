@@ -104,11 +104,11 @@ def log_response(resp):
         "request": {
             "method": resp.request.method,
             "url": resp.request.url,
-            "body": resp.request.body[:500] if resp.request.body else None,
+            "body": str(resp.request.body)[:500] if resp.request.body else None,
         },
         "response": {
             "status": resp.status_code,
-            "body": resp.content[:500] if resp.content else None,
+            "body": str(resp.content)[:500] if resp.content else None,
         }
     })
 
@@ -162,14 +162,25 @@ def list_of_str(i):
         raise ValidationException("field must be a JSON-formatted array")
 
 
-def apply_change(wof, form, attr_name, formatter=str):
-    raw_new_value = form[attr_name]
+def mz_bool(i):
+    v = maybe_int(i)
+
+    if v in (-1, 0, 1):
+        return v
+
+    raise ValidationException("field must be one of -1, 0, 1")
+
+
+def apply_change(wof, form, attr_name, formatter=None):
+    new_value = form[attr_name]
     old_value = wof['properties'].get(attr_name)
 
-    if old_value != raw_new_value:
-        if raw_new_value not in ([], ""):
+    formatter = formatter or str
+
+    if old_value != new_value:
+        if new_value not in ([], ""):
             try:
-                new_value = formatter(raw_new_value)
+                new_value = formatter(new_value)
             except ValidationException as e:
                 raise ValidationException("Error in field %s: %s" % (attr_name, e))
 
@@ -223,9 +234,9 @@ def edit_place(wof_id):
         try:
             apply_change(wof_doc, request.form, "wof:name")
             apply_change(wof_doc, request.form, "wof:shortcode")
-            apply_change(wof_doc, request.form, "mz:is_current", maybe_int)
-            apply_change(wof_doc, request.form, "mz:is_funky", maybe_int)
-            apply_change(wof_doc, request.form, "mz:hierarchy_label")
+            apply_change(wof_doc, request.form, "mz:is_current", mz_bool)
+            apply_change(wof_doc, request.form, "mz:is_funky", mz_bool)
+            apply_change(wof_doc, request.form, "mz:hierarchy_label", mz_bool)
             apply_change(wof_doc, request.form, "edtf:cessation")
             apply_change(wof_doc, request.form, "edtf:deprecated")
             apply_change(wof_doc, request.form, "edtf:inception")
