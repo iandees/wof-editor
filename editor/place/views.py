@@ -86,16 +86,6 @@ lang_expansion = {
 }
 
 
-@place_bp.app_template_filter()
-def expand_spec(spec):
-    return spec_expansion.get(spec, spec)
-
-
-@place_bp.app_template_filter()
-def expand_lang(lang):
-    return lang_expansion.get(lang, lang)
-
-
 @place_bp.route('/')
 def root_page():
     return render_template('place/index.html')
@@ -239,6 +229,28 @@ def edit_place(wof_id):
     # Put localized_names and labels information in a more convenient container
     localized_names = parse_prefix_map(wof_doc['properties'], 'name:')
     localized_labels = parse_prefix_map(wof_doc['properties'], 'label:')
+
+    localized_names_tagify_whitelist = []
+    for lang in localized_names.keys():
+        lang_expanded = lang_expansion.get(lang)
+        search_by = [lang, lang_expanded] if lang_expanded else [lang]
+
+        localized_names_tagify_whitelist.append({
+            "lang": lang,
+            "value": "%s (%s)" % (lang_expanded, lang) if lang_expanded else lang,
+            "searchBy": search_by,
+        })
+
+    localized_labels_tagify_whitelist = []
+    for lang in localized_labels.keys():
+        lang_expanded = lang_expansion.get(lang)
+        search_by = [lang, lang_expanded] if lang_expanded else [lang]
+
+        localized_labels_tagify_whitelist.append({
+            "lang": lang,
+            "value": "%s (%s)" % (lang_expanded, lang) if lang_expanded else lang,
+            "searchBy": search_by,
+        })
 
     if request.method == 'POST':
 
@@ -519,8 +531,11 @@ def edit_place(wof_id):
     return render_template(
         'place/edit.html',
         wof_doc=wof_doc,
+        lang_expansion=lang_expansion,
         name_specs=name_specs,
         localized_names=localized_names,
+        localized_names_tagify_whitelist=localized_names_tagify_whitelist,
         label_specs=label_specs,
         localized_labels=localized_labels,
+        localized_labels_tagify_whitelist=localized_labels_tagify_whitelist,
     )
