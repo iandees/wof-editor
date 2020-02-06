@@ -218,13 +218,13 @@ $(document).ready(function() {
     <!-- https://github.com/whosonfirst/whosonfirst-properties/blob/master/properties/wof/lang_x_spoken.json -->
     <div class="form-group">
         <label for="wof-lang_x_spoken">Spoken Languages</label>&nbsp;<small>(<code>wof:lang_x_spoken</code>)</small>
-        <input type="text" class="form-control wof-input" name="wof:lang_x_spoken" data-wof-type="list" pattern="^[a-z]{3}$" value="{{ wof_doc.properties['wof:lang_x_spoken'] }}">
+        <input type="text" class="form-control wof-input" name="wof:lang_x_spoken" data-wof-type="list" pattern="^[a-z]{3}$" value='{{ (wof_doc.properties['wof:lang_x_spoken'] or [])|tojson }}'>
         <small id="wof-lang_x_spoken-help" class="form-text text-muted">One or more ISO-639-3 language identifiers. These represent the languages, inclusive of official languages, spoken in the location of the corresponding WOF record.</small>
     </div>
     <!-- https://github.com/whosonfirst/whosonfirst-properties/blob/master/properties/wof/lang_x_official.json -->
     <div class="form-group">
         <label for="wof-lang_x_official">Official Languages</label>&nbsp;<small>(<code>wof:lang_x_official</code>)</small>
-        <input type="text" class="form-control wof-input" name="wof:lang_x_official" data-wof-type="list" pattern="^[a-z]{3}$" value="{{ wof_doc.properties['wof:lang_x_official'] }}">
+        <input type="text" class="form-control wof-input" name="wof:lang_x_official" data-wof-type="list" pattern="^[a-z]{3}$" value='{{ (wof_doc.properties['wof:lang_x_official'] or [])|tojson }}'>
         <small id="wof-lang_x_official-help" class="form-text text-muted">One or more ISO-639-3 language identifiers. These represent the officially recognized languages of the location of the corresponding WOF record.</small>
     </div>
     <!-- https://github.com/whosonfirst/whosonfirst-properties/blob/master/properties/wof/country.json -->
