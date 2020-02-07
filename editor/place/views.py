@@ -5,6 +5,7 @@ import json
 import mapzen.whosonfirst.validator
 import os
 import random
+import re
 import requests
 import string
 import time
@@ -13,6 +14,7 @@ from flask_login import current_user
 from flask import (
     current_app,
     flash,
+    jsonify,
     make_response,
     redirect,
     render_template,
@@ -213,18 +215,75 @@ def build_wof_branchname(wof):
     return "wofedit-%s-%s" % (props['wof:id'], branch_suffix)
 
 
+def find_wof_doc(wof_id):
+    wof_doc_url_suffix = build_wof_doc_url_suffix(wof_id)
+
+    # Only request the first 10K of the doc to avoid the geometry if it's really big
+    resp = requests.get(
+        "https://data.whosonfirst.org/" + wof_doc_url_suffix,
+        headers={"Range": "0-10000"},
+    )
+
+    resp.raise_for_status()
+
+    # Use regex to find the wof repo key in the doc
+    match = re.findall(r'\"wof:repo\"\s*:\s*\"([^\"]*)\",', resp.text)
+    if match:
+        wof_repo = match[0]
+
+    return (wof_repo, "data/" + wof_doc_url_suffix)
+
+@place_bp.route('/place/<int:wof_id>/metadata')
+def place_metadata(wof_id):
+    try:
+        wof_repo, place_path = find_wof_doc(wof_id)
+    except requests.exceptions.HTTPError as e:
+        if e.response.status_code == 404:
+            return jsonify({
+                "error": "That WOF ID was not found",
+            }), 404
+        else:
+            return jsonify({
+                "error": "Something went wrong finding that WOF ID",
+                "message": str(e),
+            }), 500
+
+    return jsonify({
+        "owner": "whosonfirst-data",
+        "repo": wof_repo,
+        "path": place_path,
+        "github_web_url": "https://github.com/whosonfirst-data/%s/tree/master/%s" % (wof_repo, place_path),
+    })
+
+
 @place_bp.route('/place/<int:wof_id>/edit', methods=["GET", "POST"])
 def edit_place(wof_id):
-    # Load the WOF doc for display/edit
-    wof_doc_url_suffix = build_wof_doc_url_suffix(wof_id)
-    resp = requests.get("https://data.whosonfirst.org/" + wof_doc_url_suffix)
+    # Find the WOF repo for the WOF ID
+    try:
+        wof_repo, place_path = find_wof_doc(wof_id)
+    except requests.exceptions.HTTPError as e:
+        if e.response.status_code == 404:
+            flash("Couldn't find that WOF ID")
+        else:
+            flash("Something went wrong while finding that WOF ID")
+        return redirect(url_for("place.root_page"))
+
+    # Get the WOF doc from the master branch of the repo
+    resp = requests.get("https://raw.githubusercontent.com/whosonfirst-data/%s/master/%s" % (wof_repo, place_path))
     current_app.logger.warn(log_response(resp))
     if resp.status_code == 200:
         wof_doc = resp.json()
     elif resp.status_code == 404:
-        return "that wof doc doesn't exist", 404
+        flash("Couldn't find that WOF ID")
+        return redirect(url_for("place.root_page"))
     else:
-        return "problem getting wof doc: HTTP %s for %s" % (resp.status_code, resp.request.url), 500
+        current_app.logger.warn(
+            "Problem getting WOF doc: HTTP %s for %s",
+            resp.status_code,
+            resp.request.url,
+        )
+        flash("Couldn't get that WOF doc")
+        return redirect(url_for("place.root_page"))
 
     # Put localized_names and labels information in a more convenient container
     localized_names = parse_prefix_map(wof_doc['properties'], 'name:')
@@ -318,7 +377,7 @@ def edit_place(wof_id):
         branch_name = build_wof_branchname(wof_doc)
         base_ref = 'heads/master'
 
-        file_path = "data/" + wof_doc_url_suffix
+        file_path = place_path
         place_name = wof_doc['properties']['wof:name']
 
         sess = requests.Session()
