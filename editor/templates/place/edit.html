@@ -165,25 +165,25 @@ $(document).ready(function() {
     <div class="form-group">
         <label for="edtf-cessation">Cessation</label>&nbsp;<small>(<code>edtf:cessation</code>)</small>
         <input type="text" class="form-control wof-input" name="edtf:cessation" value="{{ wof_doc.properties['edtf:cessation'] }}">
-        <small id="edtf-cessation-help" class="form-text text-muted">Indicates when a place stopped being a going concern. The semantics for something ceasing may vary from placetype to placetype. For example, a venue may cease operations or a country may split in to multiple countries.</small>
+        <small id="edtf-cessation-help" class="form-text text-muted">Indicates when a place stopped being a going concern. The semantics for something ceasing may vary from placetype to placetype. For example, a venue may cease operations or a country may split in to multiple countries. Supports EDTF date notation like: 2000, 2000-01, 2000-01-01 and approximate dates like ~2000. Defaults to uuuu when unknown.</small>
     </div>
     <!-- https://github.com/whosonfirst/whosonfirst-properties/blob/master/properties/edtf/deprecated.json -->
     <div class="form-group">
         <label for="edtf-deprecated">Deprecated</label>&nbsp;<small>(<code>edtf:deprecated</code>)</small>
         <input type="text" class="form-control wof-input" name="edtf:deprecated" value="{{ wof_doc.properties['edtf:deprecated'] }}">
-        <small id="edtf-deprecated-help" class="form-text text-muted">Indicates the date when a place was determined to be invalid (was never a going concern).</small>
+        <small id="edtf-deprecated-help" class="form-text text-muted">Indicates the date when a place was determined to be invalid (was never a going concern). Supports EDTF date notation like: 2000, 2000-01, 2000-01-01 and approximate dates like ~2000. Defaults to uuuu when unknown.</small>
     </div>
     <!-- https://github.com/whosonfirst/whosonfirst-properties/blob/master/properties/edtf/inception.json -->
     <div class="form-group">
         <label for="edtf-inception">Inception</label>&nbsp;<small>(<code>edtf:inception</code>)</small>
         <input type="text" class="form-control wof-input" name="edtf:inception" value="{{ wof_doc.properties['edtf:inception'] }}">
-        <small id="edtf-inception-help" class="form-text text-muted">Indicates the date when a place was first created or established.</small>
+        <small id="edtf-inception-help" class="form-text text-muted">Indicates the date when a place was first created or established. Supports EDTF date notation like: 2000, 2000-01, 2000-01-01 and approximate dates like ~2000. Defaults to uuuu when unknown.</small>
     </div>
     <!-- https://github.com/whosonfirst/whosonfirst-properties/blob/master/properties/edtf/superseded.json -->
     <div class="form-group">
         <label for="edtf-superseded">Superseded</label>&nbsp;<small>(<code>edtf:superseded</code>)</small>
         <input type="text" class="form-control wof-input" name="edtf:superseded" value="{{ wof_doc.properties['edtf:superseded'] }}">
-        <small id="edtf-superseded-help" class="form-text text-muted">Indicates the date when a record was superseded by another record.</small>
+        <small id="edtf-superseded-help" class="form-text text-muted">Indicates the date when a record was superseded by another record. Supports EDTF date notation like: 2000, 2000-01, 2000-01-01 and approximate dates like ~2000. Defaults to uuuu when unknown.</small>
     </div>
     <!-- https://github.com/whosonfirst/whosonfirst-properties/blob/master/properties/wof/population.json -->
     <div class="form-group">
