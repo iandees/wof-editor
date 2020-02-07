@@ -15,7 +15,7 @@ provider:
   name: aws
   runtime: python3.6
   memorySize: 512
-  timeout: 15
+  timeout: 30
   stage: dev
   region: us-east-1
   environment:
