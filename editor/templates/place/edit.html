@@ -350,6 +350,24 @@ $(document).ready(function() {
         </div>
     </div>
 
+    <h4>Concordances</h4>
+    {%- for k, v in (wof_doc.properties['wof:concordances'] or {}).items() %}
+    <div class="form-group">
+        <div class="row">
+            <label class="col-sm-4 col-form-label">{{ provider_expansion.get(k, k) }}&nbsp;<small>(<code>{{ k }}</code>)</small></label>
+            <div class="col-sm-8">
+                <input type="text" class="form-control" name="wof:concordances_x_{{ k }}" value="{{ v }}" />
+            </div>
+        </div>
+        <div id="concordance-row-template" class="row" style="display: none;">
+            <label class="col-sm-4 col-form-label">{{ provider_expansion.get(k, k) }}&nbsp;<small>(<code>{{ k }}</code>)</small></label>
+            <div class="col-sm-8">
+                <input type="text" class="form-control" name="wof:concordances_x_{{ k }}" value="{{ v }}" />
+            </div>
+        </div>
+    </div>
+    {%- endfor %}
+
     <div class="form-group">
         <button type="submit" name="next-step" value="pr" class="btn btn-primary">Propose Change on GitHub</button>
         <p class="help-block">Create a GitHub pull request with the changes you made above.</p>

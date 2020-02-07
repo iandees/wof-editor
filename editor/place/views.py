@@ -86,6 +86,19 @@ lang_expansion = {
     'zho_CN': 'Chinese (China)',
     'zho_TW': 'Chinese (Taiwan)',
 }
+provider_expansion = {
+    "gn:id": "GeoNames",
+    "wk:page": "Wikipedia",
+    "wd:id": "Wikidata",
+    "gp:id": "GeoPlanet",
+    "qs_pg:id": "Quattroshapes Point Gazetteer",
+    "loc:id": "Library of Congress",
+    "fips:code": "Federal Information Processing Standards (FIPS)",
+    "hasc:id": "Statoids HASC",
+    "qs:id": "Quattroshapes",
+    "woe:id": "Where On Earth",
+    "iso:id": "International Organization for Standardization"
+}
 
 
 @place_bp.route('/', methods=["GET", "POST"])
@@ -375,6 +388,15 @@ def edit_place():
                 apply_change(wof_doc, request.form, k, list_of_str)
             for k in filter(lambda i: i.startswith('label:'), wof_doc['properties'].keys()):
                 apply_change(wof_doc, request.form, k, list_of_str)
+
+            for k, new_value in filter(lambda i: i[0].startswith('wof:concordances_x_'), request.form.items()):
+                concordance_provider = k[19:]
+                old_value = wof_doc['properties']['wof:concordances'].get(concordance_provider)
+                if old_value != new_value:
+                    if new_value:
+                        wof_doc['properties']['wof:concordances'][concordance_provider] = new_value
+                    elif old_value is not None:
+                        del wof_doc['properties']['wof:concordances'][concordance_provider]
         except ValidationException as e:
             flash("Problem validating changes: %s" % e)
             return redirect(request.url)
@@ -621,6 +643,7 @@ def edit_place():
         'place/edit.html',
         wof_url=wof_url,
         wof_doc=wof_doc,
+        provider_expansion=provider_expansion,
         lang_expansion=lang_expansion,
         name_specs=name_specs,
         localized_names=localized_names,
