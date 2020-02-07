@@ -2,6 +2,31 @@
 
 {%- block title %}{{ super() }} : Places{%- endblock %}
 
-{%- block page %}
-<h1>Hello World</h1>
+{%- block content %}
+<h3>Edit Who's On First Places</h3>
+<hr/>
+<div class="row">
+    <div class="col-md-4">
+        <form method="POST">
+            <h5>Find By ID</h5>
+            <div class="form-group">
+                <label for="wof-id">ID</label>
+                <input type="text" class="form-control" name="wof_id" placeholder="8375993" value="{{ request.args.get('wof_id') or '' }}">
+                <small class="form-text text-muted">Use the record in data.whosonfirst.org to find the place in GitHub and edit the latest version there.</small>
+            </div>
+            <button type="submit" class="btn btn-primary">Find By ID</button>
+        </form>
+    </div>
+    <div class="col-md-8">
+        <form method="POST">
+            <h5>Find By URL</h5>
+            <div class="form-group">
+                <label for="wof-id">WOF Document URL</label>
+                <input type="text" class="form-control" name="gh_repo" placeholder="https://raw.githubusercontent.com/whosonfirst-data/whosonfirst-data-admin-us/master/data/100/772/941/9/1007729419.geojson">
+                <small class="form-text text-muted">Edit the place in the given URL. This URL must lead to a properly-formatted GeoJSON WOF document.</small>
+            </div>
+            <button type="submit" class="btn btn-primary">Find By URL</button>
+        </form>
+    </div>
+</div>
 {%- endblock %}

@@ -88,8 +88,31 @@ lang_expansion = {
 }
 
 
-@place_bp.route('/')
+@place_bp.route('/', methods=["GET", "POST"])
 def root_page():
+    wof_url = None
+    if request.method == 'POST':
+        wof_id = request.form.get('wof_id', type=int)
+        wof_url = request.form.get('wof_url')
+    elif request.method == 'GET':
+        wof_id = request.args.get('wof_id', type=int)
+
+    if wof_id is not None:
+        # Find the WOF repo for the WOF ID
+        try:
+            wof_repo, place_path = find_wof_doc(wof_id)
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 404:
+                flash("Couldn't find that WOF ID")
+            else:
+                flash("Something went wrong while finding that WOF ID")
+            return redirect(request.url)
+
+        wof_url = "https://raw.githubusercontent.com/whosonfirst-data/%s/master/%s" % (wof_repo, place_path)
+
+    if wof_url is not None:
+        return redirect(url_for('place.edit_place', url=wof_url))
+
     return render_template('place/index.html')
 
 
@@ -256,20 +279,19 @@ def place_metadata(wof_id):
     })
 
 
-@place_bp.route('/place/<int:wof_id>/edit', methods=["GET", "POST"])
-def edit_place(wof_id):
-    # Find the WOF repo for the WOF ID
-    try:
-        wof_repo, place_path = find_wof_doc(wof_id)
-    except requests.exceptions.HTTPError as e:
-        if e.response.status_code == 404:
-            flash("Couldn't find that WOF ID")
-        else:
-            flash("Something went wrong while finding that WOF ID")
-        return redirect(url_for("place.root_page"))
+@place_bp.route('/place/<int:wof_id>/edit')
+def edit_place_id(wof_id):
+    return redirect(url_for('place.root_page', wof_id=wof_id))
 
-    # Get the WOF doc from the master branch of the repo
-    resp = requests.get("https://raw.githubusercontent.com/whosonfirst-data/%s/master/%s" % (wof_repo, place_path))
+
+@place_bp.route('/place/edit', methods=["GET", "POST"])
+def edit_place():
+    wof_url = request.args.get("url")
+    if not wof_url:
+        return redirect(url_for('place.root_page'))
+
+    # Get the WOF doc by URL
+    resp = requests.get(wof_url, timeout=0.7)
     current_app.logger.warn(log_response(resp))
     if resp.status_code == 200:
         wof_doc = resp.json()
@@ -284,6 +306,17 @@ def edit_place(wof_id):
         )
         flash("Couldn't get that WOF doc")
         return redirect(url_for("place.root_page"))
+
+    if 'properties' not in wof_doc or \
+            'id' not in wof_doc or \
+            wof_doc.get('type') != 'Feature' or \
+            'wof:repo' not in wof_doc['properties']:
+        flash("That doesn't look like a valid WOF document")
+        return redirect(url_for('place.root_page'))
+
+    wof_id = wof_doc['id']
+    file_path = 'data/' + build_wof_doc_url_suffix(wof_id)
+    place_name = wof_doc['properties'].get('wof:name')
 
     # Put localized_names and labels information in a more convenient container
     localized_names = parse_prefix_map(wof_doc['properties'], 'name:')
@@ -376,9 +409,6 @@ def edit_place(wof_id):
         base_repo = build_wof_repo_name(wof_doc)
         branch_name = build_wof_branchname(wof_doc)
         base_ref = 'heads/master'
-
-        file_path = place_path
-        place_name = wof_doc['properties'].get('wof:name')
 
         sess = requests.Session()
         sess.headers['Authorization'] = ('token ' + session.get('access_token'))
@@ -588,6 +618,7 @@ def edit_place(wof_id):
 
     return render_template(
         'place/edit.html',
+        wof_url=wof_url,
         wof_doc=wof_doc,
         lang_expansion=lang_expansion,
         name_specs=name_specs,

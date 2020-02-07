@@ -156,7 +156,7 @@ $(document).ready(function() {
     <div id="map"></div>
 </div>
 
-<form class="needs-validation" novalidate method="POST">
+<form class="needs-validation" novalidate action="{{ url_for('place.edit_place', url=wof_url) }}" method="POST">
     <!-- https://github.com/whosonfirst/whosonfirst-properties/blob/master/properties/wof/name.json -->
     <div class="form-group">
         <label for="wof-name">Name</label>&nbsp;<small>(<code>wof:name</code>)</small>
