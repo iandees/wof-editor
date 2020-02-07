@@ -349,6 +349,7 @@ def edit_place():
         # Consume the changes from the form
         try:
             apply_change(wof_doc, request.form, "wof:name")
+            apply_change(wof_doc, request.form, "wof:placetype_alt", list_of_str)
             apply_change(wof_doc, request.form, "wof:shortcode")
             apply_change(wof_doc, request.form, "mz:is_current", mz_bool)
             apply_change(wof_doc, request.form, "mz:is_funky", mz_bool)

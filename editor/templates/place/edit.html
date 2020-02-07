@@ -163,6 +163,18 @@ $(document).ready(function() {
         <input type="text" class="form-control wof-input" name="wof:name" value="{{ wof_doc.properties['wof:name'] }}">
         <small id="wof-name-help" class="form-text text-muted">An English UTF-7 transliterated representation of the name. (Some features have UTF-8 names.)</small>
     </div>
+    <!-- https://github.com/whosonfirst/whosonfirst-properties/blob/master/properties/wof/placetype.json -->
+    <div class="form-group">
+        <label for="wof-placetype">Placetype</label>&nbsp;<small>(<code>wof:placetype</code>)</small>
+        <input type="text" class="form-control wof-input" name="wof:placetype" disabled value="{{ wof_doc.properties['wof:placetype'] }}">
+        <small id="wof-placetype-help" class="form-text text-muted">What WOF calls a record's administrative division type.</small>
+    </div>
+    <!-- https://github.com/whosonfirst/whosonfirst-properties/blob/master/properties/wof/placetype_alt.json -->
+    <div class="form-group">
+        <label for="wof-placetype_alt">Alternate Placetypes</label>&nbsp;<small>(<code>wof:placetype_alt</code>)</small>
+        <input type="text" class="form-control wof-input" name="wof:placetype_alt" data-wof-type="list" value='{{ (wof_doc.properties['wof:placetype_alt'] or [])|tojson }}'>
+        <small id="wof-placetype_alt-help" class="form-text text-muted">A single placetype denoting alternate representations of a place (exclusive of the placetype value).</small>
+    </div>
     <!-- https://github.com/whosonfirst/whosonfirst-properties/blob/master/properties/wof/shortcode.json -->
     <div class="form-group">
         <label for="wof-shortcode">Shortcode</label>&nbsp;<small>(<code>wof:shortcode</code>)</small>
