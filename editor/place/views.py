@@ -378,7 +378,7 @@ def edit_place(wof_id):
         base_ref = 'heads/master'
 
         file_path = place_path
-        place_name = wof_doc['properties']['wof:name']
+        place_name = wof_doc['properties'].get('wof:name')
 
         sess = requests.Session()
         sess.headers['Authorization'] = ('token ' + session.get('access_token'))
@@ -522,7 +522,7 @@ def edit_place(wof_id):
         resp = sess.post(
             'https://api.github.com/repos/%s/git/commits' % (write_repo,),
             json={
-                "message": "Updating %s" % place_name,
+                "message": "Updating place %s" % (place_name or wof_id),
                 "tree": new_tree_sha,
                 "parents": [base_ref_sha],
             }
@@ -564,7 +564,7 @@ def edit_place(wof_id):
         resp = sess.post(
             'https://api.github.com/repos/%s/pulls' % (base_repo,),
             json={
-                "title": "Update Place %s" % place_name,
+                "title": "Update Place %s" % (place_name or wof_id),
                 "head": (fork_owner + branch_name),
                 "base": "master",
                 "body": "Updating `%s` using the [WOF Editor](https://github.com/iandees/wof-editor)" % file_path,
