@@ -99,6 +99,8 @@ provider_expansion = {
     "woe:id": "Where On Earth",
     "iso:id": "International Organization for Standardization"
 }
+# Concordance fields that should be ints. See https://github.com/iandees/wof-editor/issues/13#issuecomment-583667919
+concordance_ints = set(["gn:id", "gp:id", "qs:id", "qs_pg:id"])
 
 
 @place_bp.route('/', methods=["GET", "POST"])
@@ -392,6 +394,11 @@ def edit_place():
             # Make any changes to existing concordances
             for k, new_value in filter(lambda i: i[0].startswith('wof:concordances_x_'), request.form.items()):
                 concordance_provider = k[19:]
+                if concordance_provider in concordance_ints:
+                    try:
+                        new_value = int(new_value)
+                    except ValueError:
+                        raise ValidationException("Concordance %s must be an integer" % concordance_provider)
                 old_value = wof_doc['properties']['wof:concordances'].get(concordance_provider)
                 if old_value != new_value:
                     if new_value:
@@ -405,6 +412,11 @@ def edit_place():
                 new_key = request.form.get(form_key)
                 new_value = request.form.get('new-wof:concordances-value' + new_row_suffix)
                 if new_key and new_value:
+                    if new_key in concordance_ints:
+                        try:
+                            new_value = int(new_value)
+                        except ValueError:
+                            raise ValidationException("Concordance %s must be an integer" % new_key)
                     wof_doc['properties']['wof:concordances'][new_key] = new_value
         except ValidationException as e:
             flash("Problem validating changes: %s" % e)
