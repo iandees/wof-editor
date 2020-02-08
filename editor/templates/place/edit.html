@@ -145,6 +145,16 @@ $(document).ready(function() {
             e.preventDefault();
         }
     });
+
+    $("#add-concordance").on("click", function(e) {
+        var newRow = $("#new-concordance-row-template").clone();
+        newRow.insertAfter($(".concordance-row").last());
+        newRow.addClass("concordance-row");
+        newRow.removeAttr("id");
+        newRow.find('input[name="new-wof:concordances-name"]').attr("name", "new-wof:concordances-name" + $(".concordance-row").length);
+        newRow.find('input[name="new-wof:concordances-value"]').attr("name", "new-wof:concordances-value" + $(".concordance-row").length);
+        newRow.show();
+    });
 });
 </script>
 {%- endblock %}
@@ -351,22 +361,31 @@ $(document).ready(function() {
     </div>
 
     <h4>Concordances</h4>
-    {%- for k, v in (wof_doc.properties['wof:concordances'] or {}).items() %}
     <div class="form-group">
-        <div class="row">
-            <label class="col-sm-4 col-form-label">{{ provider_expansion.get(k, k) }}&nbsp;<small>(<code>{{ k }}</code>)</small></label>
-            <div class="col-sm-8">
-                <input type="text" class="form-control" name="wof:concordances_x_{{ k }}" value="{{ v }}" />
+        {%- for k, v in (wof_doc.properties['wof:concordances'] or {}).items() %}
+        <div class="form-group concordance-row">
+            <div class="row">
+                <label class="col-sm-4 col-form-label">{{ provider_expansion.get(k, k) }}&nbsp;<small>(<code>{{ k }}</code>)</small></label>
+                <div class="col-sm-8">
+                    <input type="text" class="form-control" name="wof:concordances_x_{{ k }}" value="{{ v }}" />
+                </div>
             </div>
         </div>
-        <div id="concordance-row-template" class="row" style="display: none;">
-            <label class="col-sm-4 col-form-label">{{ provider_expansion.get(k, k) }}&nbsp;<small>(<code>{{ k }}</code>)</small></label>
-            <div class="col-sm-8">
-                <input type="text" class="form-control" name="wof:concordances_x_{{ k }}" value="{{ v }}" />
+        {%- endfor %}
+        <div id="new-concordance-row-template" class="form-group" style="display: none;">
+            <div class="row">
+                <div class="col-sm-4">
+                    <input type="text" class="form-control" name="new-wof:concordances-name" />
+                </div>
+                <div class="col-sm-8">
+                    <input type="text" class="form-control" name="new-wof:concordances-value" />
+                </div>
             </div>
+        </div>
+        <div class="row">
+            <button type="button" id="add-concordance" class="btn btn-sm btn-outline-primary">Add New Concordance</button>
         </div>
     </div>
-    {%- endfor %}
 
     <div class="form-group">
         <button type="submit" name="next-step" value="pr" class="btn btn-primary">Propose Change on GitHub</button>

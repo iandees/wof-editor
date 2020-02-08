@@ -389,6 +389,7 @@ def edit_place():
             for k in filter(lambda i: i.startswith('label:'), wof_doc['properties'].keys()):
                 apply_change(wof_doc, request.form, k, list_of_str)
 
+            # Make any changes to existing concordances
             for k, new_value in filter(lambda i: i[0].startswith('wof:concordances_x_'), request.form.items()):
                 concordance_provider = k[19:]
                 old_value = wof_doc['properties']['wof:concordances'].get(concordance_provider)
@@ -397,6 +398,14 @@ def edit_place():
                         wof_doc['properties']['wof:concordances'][concordance_provider] = new_value
                     elif old_value is not None:
                         del wof_doc['properties']['wof:concordances'][concordance_provider]
+
+            # Add any new concordances
+            for form_key in filter(lambda i: i.startswith('new-wof:concordances-name'), request.form.keys()):
+                new_row_suffix = form_key[25:]
+                new_key = request.form.get(form_key)
+                new_value = request.form.get('new-wof:concordances-value' + new_row_suffix)
+                if new_key and new_value:
+                    wof_doc['properties']['wof:concordances'][new_key] = new_value
         except ValidationException as e:
             flash("Problem validating changes: %s" % e)
             return redirect(request.url)
