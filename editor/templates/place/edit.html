@@ -292,6 +292,11 @@ $(document).ready(function() {
     <div class="form-group">
         <label for="alternate-names-selected">Filter</label>
         <input type="text" class="form-control" id="alternate-names-selected">
+        {%- if localized_names|length == 1 %}
+        <small class="form-text text-muted">This place has localized names in 1 language. English is shown by default. Add more to the filter box to show more languages.</small>
+        {%- else %}
+        <small class="form-text text-muted">This place has localized names in {{ localized_names|length }} languages. English is shown by default. Add more to the filter box to show more languages.</small>
+        {%- endif %}
     </div>
     <div class="form-group">
         {%- for lang, specs in localized_names.items() %}
@@ -328,6 +333,11 @@ $(document).ready(function() {
     <div class="form-group">
         <label for="localized-labels-selected">Filter</label>
         <input type="text" class="form-control" id="localized-labels-selected">
+        {%- if localized_labels|length == 1 %}
+        <small class="form-text text-muted">This place has localized labels in 1 language. English is shown by default. Add more to the filter box to show more languages.</small>
+        {%- else %}
+        <small class="form-text text-muted">This place has localized labels in {{ localized_labels|length }} languages. English is shown by default. Add more to the filter box to show more languages.</small>
+        {%- endif %}
     </div>
     <div class="form-group">
         {%- for lang, specs in localized_labels.items() %}
