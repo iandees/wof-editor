@@ -3,6 +3,7 @@ service: serverless-flask
 plugins:
   - serverless-python-requirements
   - serverless-wsgi
+  - serverless-apigw-binary
 
 custom:
   wsgi:
@@ -10,6 +11,9 @@ custom:
     packRequirements: false
   pythonRequirements:
     dockerizePip: non-linux
+  apigwBinary:
+    types:
+      - '*/*'
 
 provider:
   name: aws
