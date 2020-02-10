@@ -69,7 +69,14 @@ $(document).ready(function() {
         checkValid($(this));
     });
 
-    $('input.wof-input[data-wof-type="list"]').tagify();
+    // Add dropdown list for languages
+    $('input.wof-input[name="wof:lang_x_spoken"]').tagify({
+        whitelist: {{ lang_expansion.keys()|list|tojson }},
+    });
+    $('input.wof-input[name="wof:lang_x_official"]').tagify({
+        whitelist: {{ lang_expansion.keys()|list|tojson }},
+    });
+    $('input.wof-input[name="wof:placetype_alt"]').tagify();
     $(".use-tagify").tagify({delimiters: null});
 
     // Set up a filter to pick which languages to show
