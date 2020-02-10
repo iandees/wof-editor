@@ -177,7 +177,7 @@ $(document).ready(function() {
     <!-- https://github.com/whosonfirst/whosonfirst-properties/blob/master/properties/wof/name.json -->
     <div class="form-group">
         <label for="wof-name">Name</label>&nbsp;<small>(<code>wof:name</code>)</small>
-        <input type="text" class="form-control wof-input" name="wof:name" value="{{ wof_doc.properties['wof:name'] }}">
+        <input type="text" class="form-control wof-input" name="wof:name" data-wof-validation-regex="^.{1,}$" value="{{ wof_doc.properties['wof:name'] }}">
         <small id="wof-name-help" class="form-text text-muted">An English UTF-7 transliterated representation of the name. (Some features have UTF-8 names.)</small>
     </div>
     <!-- https://github.com/whosonfirst/whosonfirst-properties/blob/master/properties/wof/placetype.json -->
