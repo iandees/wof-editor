@@ -1,4 +1,4 @@
-service: serverless-flask
+service: wof-editor
 
 plugins:
   - serverless-python-requirements
@@ -20,12 +20,14 @@ provider:
   runtime: python3.6
   memorySize: 512
   timeout: 30
-  stage: dev
+  stage: ${opt:stage, 'dev'}
   region: us-east-1
+  endpointType: REGIONAL
   environment:
     GITHUB_APP_ID: ${file(./config.${self:provider.stage}.yaml):GITHUB_APP_ID}
     GITHUB_APP_SECRET: ${file(./config.${self:provider.stage}.yaml):GITHUB_APP_SECRET}
     SECRET_KEY: ${file(./config.${self:provider.stage}.yaml):SECRET_KEY}
+    STRIP_STAGE_PATH: ${file(./config.${self:provider.stage}.yaml):STRIP_STAGE_PATH}
 
 functions:
   app:
