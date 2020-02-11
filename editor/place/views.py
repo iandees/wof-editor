@@ -364,7 +364,7 @@ def edit_place():
         # Consume the changes from the form
         try:
             apply_change(wof_doc, request.form, "wof:name")
-            if not wof_doc["wof:name"]:
+            if not wof_doc.get("wof:name"):
                 raise ValidationException("wof:name must be set")
 
             apply_change(wof_doc, request.form, "wof:placetype_alt", list_of_str)
