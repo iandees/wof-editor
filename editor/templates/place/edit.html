@@ -64,6 +64,7 @@ $(document).ready(function() {
 
     var geomColors = {
         default: '#1f78b4',
+        geomCentroid: '#a6cee3',
         labelPoint: '#33a02c',
         labelBbox: '#fb9a99',
         revgeoPoint: '#b2df8a',
@@ -97,6 +98,11 @@ $(document).ready(function() {
     {% if wof_doc.properties['reversegeo:latitude'] is defined and wof_doc.properties['reversegeo:longitude'] is defined -%}
     var reverseGeo = L.latLng({{ wof_doc.properties['reversegeo:latitude']|float|tojson }}, {{ wof_doc.properties['reversegeo:longitude']|float|tojson }});
     var reverseGeoLayer = L.circleMarker(reverseGeo, {color: geomColors.revgeoPoint}).addTo(map);
+    {%- endif %}
+
+    {% if wof_doc.properties['geom:latitude'] is defined and wof_doc.properties['geom:longitude'] is defined -%}
+    var geomCentroid = L.latLng({{ wof_doc.properties['geom:latitude']|float|tojson }}, {{ wof_doc.properties['geom:longitude']|float|tojson }});
+    var geomCentroidLayer = L.circleMarker(geomCentroid, {color: geomColors.geomCentroid, radius: 5}).addTo(map);
     {%- endif %}
 
     $("input.wof-input").on("change", function() {
