@@ -61,9 +61,43 @@ $(document).ready(function() {
         maxZoom: 19,
         ext: 'png'
     }).addTo(map);
-    var featureLayer = L.geoJSON().addTo(map);
+
+    var geomColors = {
+        default: '#1f78b4',
+        labelPoint: '#33a02c',
+        labelBbox: '#fb9a99',
+        revgeoPoint: '#b2df8a',
+    }
+
+    var featureLayer = L.geoJSON(null, {
+        pointToLayer: function(pt, latlng) {
+            return L.circleMarker(latlng, {color: geomColors.default});
+        },
+        style: function(f) {
+            return {color: geomColors.default};
+        },
+    }).addTo(map);
     featureLayer.addData({{ {"type":"Feature","geometry":wof_doc.geometry}|tojson }});
     map.fitBounds(featureLayer.getBounds());
+
+    {% if wof_doc.properties['lbl:latitude'] is defined and wof_doc.properties['lbl:longitude'] is defined -%}
+    var labelPoint = L.latLng({{ wof_doc.properties['lbl:latitude']|float|tojson }}, {{ wof_doc.properties['lbl:longitude']|float|tojson }});
+    var labelPointLayer = L.circleMarker(labelPoint, {color: geomColors.labelPoint}).addTo(map);
+    {%- endif %}
+
+    {%- if wof_doc.properties['lbl:bbox'] is defined %}
+    {%- set bboxParts = wof_doc.properties['lbl:bbox'].split(",")|list -%}
+    var labelBbox = L.latLngBounds(
+        L.latLng({{ bboxParts[1] }}, {{ bboxParts[0] }}),
+        L.latLng({{ bboxParts[3] }}, {{ bboxParts[2] }}),
+    );
+    var labelBboxLayer = L.rectangle(labelBbox, {color: geomColors.labelBbox}).addTo(map);
+    {%- endif %}
+
+    {% if wof_doc.properties['reversegeo:latitude'] is defined and wof_doc.properties['reversegeo:longitude'] is defined -%}
+    var reverseGeo = L.latLng({{ wof_doc.properties['reversegeo:latitude']|float|tojson }}, {{ wof_doc.properties['reversegeo:longitude']|float|tojson }});
+    var reverseGeoLayer = L.circleMarker(reverseGeo, {color: geomColors.revgeoPoint}).addTo(map);
+    {%- endif %}
 
     $("input.wof-input").on("change", function() {
         checkValid($(this));
@@ -169,7 +203,7 @@ $(document).ready(function() {
 {%- block content %}
 <h3>Editing {{ wof_doc.properties['wof:name'] or wof_doc.id }}</h3><small>(<a href="https://spelunker.whosonfirst.org/id/{{ wof_doc.id }}/">View on Spelunker</a>)</small>
 
-<div class="row col-md-12">
+<div class="row col-md-12 mb-4">
     <div id="map"></div>
 </div>
 

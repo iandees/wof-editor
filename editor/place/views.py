@@ -133,7 +133,6 @@ def root_page():
 
 @place_bp.route('/favicon-32x32.png')
 def favicon():
-    print(os.path.join(current_app.root_path, 'static', 'favicon'))
     return send_from_directory(
         os.path.join(current_app.root_path, 'static', 'favicon'),
         'favicon-32x32.png',
