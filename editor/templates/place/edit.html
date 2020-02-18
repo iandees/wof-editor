@@ -134,7 +134,7 @@ $(document).ready(function() {
             newBlock.find("div h4").text(lang);
             newBlock.find("div small code").text(lang);
             newBlock.find("input.form-control").attr("name", function(e) {
-                return "label:" + lang + "_x_" + $(this).data("spec");
+                return "name:" + lang + "_x_" + $(this).data("spec");
             });
             newBlock.show();
             newBlock.find("input.form-control").tagify({delimiters: null});
