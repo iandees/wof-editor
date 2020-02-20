@@ -280,6 +280,16 @@ $(document).ready(function() {
         <input type="text" class="form-control wof-input" name="edtf:superseded" value="{{ wof_doc.properties['edtf:superseded'] }}">
         <small id="edtf-superseded-help" class="form-text text-muted">Indicates the date when a record was superseded by another record. Supports EDTF date notation like: 2000, 2000-01, 2000-01-01 and approximate dates like ~2000. Defaults to uuuu when unknown.</small>
     </div>
+    <div class="form-group">
+        <label for="wof-superseded_by">Superseded by</label>&nbsp;<small>(<code>wof:superseded_by</code>)</small>
+        <input type="text" class="form-control wof-input" name="wof:superseded_by" value="{{ wof_doc.properties['wof:superseded_by'] }}">
+        <small id="wof-superseded_by" class="form-text text-muted">Indicates the WOF ID of the record that supersedes this record.</small>
+    </div>
+    <div class="form-group">
+        <label for="wof-supersedes">Supersedes</label>&nbsp;<small>(<code>wof:supersedes</code>)</small>
+        <input type="text" class="form-control wof-input" name="wof:supersedes" value="{{ wof_doc.properties['wof:supersedes'] }}">
+        <small id="wof-supersedes" class="form-text text-muted">Indicates the WOF ID of the record that this record supersedes.</small>
+    </div>
     <!-- https://github.com/whosonfirst/whosonfirst-properties/blob/master/properties/wof/population.json -->
     <div class="form-group">
         <label for="wof-population">Population</label>&nbsp;<small>(<code>wof:population</code>)</small>
