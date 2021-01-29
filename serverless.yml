@@ -17,7 +17,7 @@ custom:
 
 provider:
   name: aws
-  runtime: python3.6
+  runtime: python3.8
   memorySize: 512
   timeout: 30
   stage: ${opt:stage, 'dev'}
