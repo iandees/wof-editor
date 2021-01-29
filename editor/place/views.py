@@ -474,7 +474,14 @@ def edit_place():
                 base_ref_sha,
             )
         else:
-            return "couldn't get base ref sha", 500
+            try:
+                message = resp.json().get('message')
+            except ValueError:
+                message = resp.content
+
+            current_app.logger.error("Couldn't get base ref sha")
+            flash("Couldn't get the SHA of the main branch in repo %s: %s" % (base_repo, message))
+            return redirect(request.url)
 
         # Create a branch from that sha1
         resp = sess.post(
@@ -486,6 +493,7 @@ def edit_place():
         )
         current_app.logger.warn(log_response(resp))
 
+        write_repo = None
         if resp.status_code == 404:
             current_app.logger.warn(
                 "Doesn't look like we have access to create a branch in repo, so creating a fork"
@@ -545,8 +553,31 @@ def edit_place():
                         time.sleep(0.5)
 
             else:
-                current_app.logger.warn("Couldn't start fork creation.")
-                return "can't create fork", 500
+                try:
+                    message = resp.json().get("message")
+                except ValueError:
+                    message = resp.content
+
+                current_app.logger.warn(
+                    "Couldn't start fork creation: %s",
+                    message,
+                )
+                flash("Couldn't create a fork: %s" % message)
+                return redirect(request.url)
+
+        elif resp.status_code == 403:
+            try:
+                message = resp.json().get("message")
+            except ValueError:
+                message = resp.content
+
+            current_app.logger.warn(
+                "Github prevented creating the branch on repo %s because: %s",
+                base_repo,
+                message,
+            )
+            flash("Github prevented the editor from creating a branch on %s: %s" % (base_repo, message))
+            return redirect(request.url)
 
         elif resp.status_code == 201:
             write_repo = base_repo
@@ -556,6 +587,26 @@ def edit_place():
                 branch_name,
                 base_repo,
             )
+
+        else:
+            try:
+                message = resp.json().get("message")
+            except ValueError:
+                message = resp.content
+
+            current_app.logger.warn(
+                "Couldn't create branch to write on in repo %s because of HTTP %d: %s",
+                base_repo,
+                resp.status_code,
+                message,
+            )
+            flash("Couldn't create a branch on %s: %s" % (base_repo, message))
+            return redirect(request.url)
+
+        if not write_repo:
+            current_app.logger.error("No write_repo set, so nowhere to create the branch.")
+            flash("Couldn't determine the repo to create the branch on")
+            return redirect(request.url)
 
         # Create a 'blob' with the contents of the updated file
         file_content_b64 = base64.standard_b64encode(exportified_wof_doc.encode('utf8')).decode('utf8')
@@ -576,8 +627,14 @@ def edit_place():
                 new_blob_sha,
             )
         else:
-            current_app.logger.warn("Couldn't create new blob")
-            return "couldn't create new blob", 500
+            try:
+                message = resp.json().get("message")
+            except ValueError:
+                message = resp.content
+
+            current_app.logger.error("Couldn't create new blob")
+            flash("Couldn't create the blob on %s: %s" % (write_repo, message))
+            return redirect(request.url)
 
         # Create a 'tree' with the blob above attached to it
         resp = sess.post(
@@ -603,8 +660,14 @@ def edit_place():
                 new_tree_sha,
             )
         else:
-            current_app.logger.warn("Couldn't create new tree")
-            return "couldn't create new tree", 500
+            try:
+                message = resp.json().get("message")
+            except ValueError:
+                message = resp.content
+
+            current_app.logger.error("Couldn't create new tree")
+            flash("Couldn't create the tree on %s: %s" % (write_repo, message))
+            return redirect(request.url)
 
         # Create a new 'commit' that attaches the tree created above to the branch
         resp = sess.post(
@@ -626,8 +689,14 @@ def edit_place():
                 new_commit_sha,
             )
         else:
-            current_app.logger.warn("Couldn't create new commit")
-            return "couldn't create new commit", 500
+            try:
+                message = resp.json().get("message")
+            except ValueError:
+                message = resp.content
+
+            current_app.logger.error("Couldn't create new commit")
+            flash("Couldn't create the commit on %s: %s" % (write_repo, message))
+            return redirect(request.url)
 
         # Update the reference of the branch to this new commit
         resp = sess.patch(
@@ -645,8 +714,14 @@ def edit_place():
                 new_commit_sha,
             )
         else:
-            current_app.logger.warn("Couldn't update ref")
-            return "couldn't update ref", 500
+            try:
+                message = resp.json().get("message")
+            except ValueError:
+                message = resp.content
+
+            current_app.logger.error("Couldn't update ref")
+            flash("Couldn't update the ref on %s: %s" % (write_repo, message))
+            return redirect(request.url)
 
         # We've created a file, now let's create the pull request
         resp = sess.post(
@@ -672,7 +747,14 @@ def edit_place():
 
             return redirect(pr_url)
         else:
-            return "couldn't create pull request", 500
+            try:
+                message = resp.json().get("message")
+            except ValueError:
+                message = resp.content
+
+            current_app.logger.error("Couldn't create pull request")
+            flash("Couldn't create the pull request on %s: %s" % (write_repo, message))
+            return redirect(request.url)
 
     return render_template(
         'place/edit.html',
