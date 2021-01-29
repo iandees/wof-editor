@@ -525,6 +525,18 @@ def edit_place():
                             fork_repo,
                         )
                         break
+                    elif resp.status_code == 403:
+                        try:
+                            message = resp.json().get("message")
+                        except ValueError:
+                            message = resp.content
+
+                        current_app.logger.warn(
+                            "Github 403'd creating the branch because: %s",
+                            message,
+                        )
+                        flash("Github prevented the editor from creating a branch: %s" % message)
+                        return redirect(request.url)
                     else:
                         current_app.logger.warn(
                             "Couldn't create branch at try %s, waiting 500ms and trying again",
