@@ -459,7 +459,7 @@ def edit_place():
         sess = requests.Session()
         sess.headers['Authorization'] = ('token ' + session.get('access_token'))
 
-        # Get the sha1 of `master` branch
+        # Get the sha of main branch
         resp = sess.get(
             'https://api.github.com/repos/%s/git/ref/%s' % (base_repo, base_ref),
         )
@@ -483,110 +483,58 @@ def edit_place():
             flash("Couldn't get the SHA of the main branch in repo %s: %s" % (base_repo, message))
             return redirect(request.url)
 
-        # Create a branch from that sha1
+        # Kick off a fork and wait for it to be created.
+        # We used to try creating the branch on the original repo, but the
+        # whosonfirst-data project needs to allow access for this app.
         resp = sess.post(
-            'https://api.github.com/repos/%s/git/refs' % (base_repo,),
-            json={
-                'ref': 'refs/heads/%s' % branch_name,
-                'sha': base_ref_sha,
-            }
+            'https://api.github.com/repos/%s/forks' % (base_repo,),
+            json={},
         )
         current_app.logger.warn(log_response(resp))
 
         write_repo = None
-        if resp.status_code == 404:
-            current_app.logger.warn(
-                "Doesn't look like we have access to create a branch in repo, so creating a fork"
-            )
+        if resp.status_code == 202:
+            fork_repo = resp.json()['full_name']
+            fork_owner = resp.json()['owner']['login'] + ":"
+            current_app.logger.warn("Forking %s to %s%s", base_repo, fork_owner, fork_repo)
 
-            # Kick off a fork and wait for it to be created
-            resp = sess.post(
-                'https://api.github.com/repos/%s/forks' % (base_repo,),
-                json={},
-            )
-            current_app.logger.warn(log_response(resp))
-
-            if resp.status_code == 202:
-                fork_repo = resp.json()['full_name']
-                fork_owner = resp.json()['owner']['login'] + ":"
-                current_app.logger.warn(
-                    "Fork creation of %s started",
-                    fork_repo,
+            for t in range(3):
+                # Try creating the branch in the fork
+                resp = sess.post(
+                    'https://api.github.com/repos/%s/git/refs' % (fork_repo,),
+                    json={
+                        'ref': 'refs/heads/%s' % branch_name,
+                        'sha': base_ref_sha,
+                    }
                 )
+                current_app.logger.warn(log_response(resp))
 
-                for t in range(3):
-                    # Try creating the branch in the fork
-                    resp = sess.post(
-                        'https://api.github.com/repos/%s/git/refs' % (fork_repo,),
-                        json={
-                            'ref': 'refs/heads/%s' % branch_name,
-                            'sha': base_ref_sha,
-                        }
+                if resp.status_code == 201:
+                    write_repo = fork_repo
+                    current_app.logger.warn(
+                        "Branch %s created on forked repo %s",
+                        branch_name,
+                        fork_repo,
                     )
-                    current_app.logger.warn(log_response(resp))
+                    break
+                elif resp.status_code == 403:
+                    try:
+                        message = resp.json().get("message")
+                    except ValueError:
+                        message = resp.content
 
-                    if resp.status_code == 201:
-                        write_repo = fork_repo
-                        current_app.logger.warn(
-                            "Branch %s created on forked repo %s",
-                            branch_name,
-                            fork_repo,
-                        )
-                        break
-                    elif resp.status_code == 403:
-                        try:
-                            message = resp.json().get("message")
-                        except ValueError:
-                            message = resp.content
-
-                        current_app.logger.warn(
-                            "Github 403'd creating the branch because: %s",
-                            message,
-                        )
-                        flash("Github prevented the editor from creating a branch: %s" % message)
-                        return redirect(request.url)
-                    else:
-                        current_app.logger.warn(
-                            "Couldn't create branch at try %s, waiting 500ms and trying again",
-                            t,
-                        )
-                        time.sleep(0.5)
-
-            else:
-                try:
-                    message = resp.json().get("message")
-                except ValueError:
-                    message = resp.content
-
-                current_app.logger.warn(
-                    "Couldn't start fork creation: %s",
-                    message,
-                )
-                flash("Couldn't create a fork: %s" % message)
-                return redirect(request.url)
-
-        elif resp.status_code == 403:
-            try:
-                message = resp.json().get("message")
-            except ValueError:
-                message = resp.content
-
-            current_app.logger.warn(
-                "Github prevented creating the branch on repo %s because: %s",
-                base_repo,
-                message,
-            )
-            flash("Github prevented the editor from creating a branch on %s: %s" % (base_repo, message))
-            return redirect(request.url)
-
-        elif resp.status_code == 201:
-            write_repo = base_repo
-            fork_owner = ""
-            current_app.logger.warn(
-                "Branch %s created on repo %s",
-                branch_name,
-                base_repo,
-            )
+                    current_app.logger.warn(
+                        "Github 403'd creating the branch because: %s",
+                        message,
+                    )
+                    flash("Github prevented the editor from creating a branch: %s" % message)
+                    return redirect(request.url)
+                else:
+                    current_app.logger.warn(
+                        "Couldn't create branch at try %s, waiting 500ms and trying again",
+                        t,
+                    )
+                    time.sleep(0.5)
 
         else:
             try:
@@ -595,18 +543,18 @@ def edit_place():
                 message = resp.content
 
             current_app.logger.warn(
-                "Couldn't create branch to write on in repo %s because of HTTP %d: %s",
-                base_repo,
-                resp.status_code,
+                "Couldn't start fork creation: %s",
                 message,
             )
-            flash("Couldn't create a branch on %s: %s" % (base_repo, message))
+            flash("Couldn't create a fork: %s" % message)
             return redirect(request.url)
 
         if not write_repo:
             current_app.logger.error("No write_repo set, so nowhere to create the branch.")
             flash("Couldn't determine the repo to create the branch on")
             return redirect(request.url)
+
+        current_app.logger.warn("Writing to branch %s on repo %s", branch_name, write_repo)
 
         # Create a 'blob' with the contents of the updated file
         file_content_b64 = base64.standard_b64encode(exportified_wof_doc.encode('utf8')).decode('utf8')
