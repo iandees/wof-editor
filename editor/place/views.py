@@ -258,7 +258,10 @@ def find_wof_doc(wof_id):
     # Only request the first 10K of the doc to avoid the geometry if it's really big
     resp = requests.get(
         "https://data.whosonfirst.org/" + wof_doc_url_suffix,
-        headers={"Range": "0-10000"},
+        headers={
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
+            "Range": "0-10000",
+        },
     )
 
     resp.raise_for_status()
