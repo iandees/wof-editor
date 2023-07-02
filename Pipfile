@@ -18,7 +18,7 @@ gunicorn = "*"
 mapzen-whosonfirst-export = {editable = true,git = "https://github.com/whosonfirst/py-mapzen-whosonfirst-export.git",ref = "master"}
 mapzen-whosonfirst-geojson = {editable = true,git = "https://github.com/whosonfirst/py-mapzen-whosonfirst-geojson.git",ref = "master"}
 mapzen-whosonfirst-meta = {editable = true,git = "https://github.com/whosonfirst/py-mapzen-whosonfirst-meta.git",ref = "master"}
-mapzen-whosonfirst-placetypes = {editable = true,git = "https://github.com/whosonfirst/py-mapzen-whosonfirst-placetypes.git",ref = "main"}
+mapzen-whosonfirst-placetypes = {editable = true,git = "https://github.com/whosonfirst/py-mapzen-whosonfirst-placetypes.git",ref = "master"}
 mapzen-whosonfirst-sources = {editable = true,git = "https://github.com/whosonfirst/py-mapzen-whosonfirst-sources.git",ref = "master"}
 mapzen-whosonfirst-uri = {editable = true,git = "https://github.com/whosonfirst/py-mapzen-whosonfirst-uri.git",ref = "master"}
 mapzen-whosonfirst-utils = {editable = true,git = "https://github.com/whosonfirst/py-mapzen-whosonfirst-utils.git",ref = "master"}
