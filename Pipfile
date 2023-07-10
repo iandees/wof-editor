@@ -11,7 +11,7 @@ black = "*"
 arrow = "*"
 atomicwrites = "*"
 edtf = "*"
-flask = "*"
+flask = ">=2.2.2"
 flask-bootstrap = "*"
 geojson = "*"
 gunicorn = "*"
@@ -24,7 +24,7 @@ mapzen-whosonfirst-uri = {editable = true,git = "https://github.com/whosonfirst/
 mapzen-whosonfirst-utils = {editable = true,git = "https://github.com/whosonfirst/py-mapzen-whosonfirst-utils.git",ref = "master"}
 mapzen-whosonfirst-validator = {editable = true,git = "https://github.com/whosonfirst/py-mapzen-whosonfirst-validator.git",ref = "master"}
 requests = "*"
-shapely = "*"
+shapely = "<2"
 rauth = "*"
 flask-login = "*"
 
