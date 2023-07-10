@@ -404,7 +404,17 @@ def edit_place():
                         new_value = int(new_value)
                     except ValueError:
                         raise ValidationException("Concordance %s must be an integer" % concordance_provider)
+
                 old_value = wof_doc['properties']['wof:concordances'].get(concordance_provider)
+
+                # If the old value is an integer type, then try coercing the new value to an int too
+                if type(old_value) is int:
+                    try:
+                        new_value = int(new_value)
+                    except ValueError:
+                        current_app.logger.warn("Concordance %s was an integer in existing document, but new value "
+                                                "couldn't be coerced", concordance_provider)
+
                 if old_value != new_value:
                     if new_value:
                         wof_doc['properties']['wof:concordances'][concordance_provider] = new_value
