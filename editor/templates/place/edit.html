@@ -194,7 +194,7 @@ $(document).ready(function() {
     });
 
     $("#add-concordance").on("click", function(e) {
-        var newRow = $("#new-concordance-row-template").clone();
+        var newRow = $("#new-concordance-row").clone();
         newRow.insertAfter($(".concordance-row").last());
         newRow.addClass("concordance-row");
         newRow.removeAttr("id");
@@ -429,13 +429,13 @@ $(document).ready(function() {
             </div>
         </div>
         {%- endfor %}
-        <div id="new-concordance-row-template" class="form-group" style="display: none;">
+        <div id="new-concordance-row" class="form-group concordance-row">
             <div class="row">
                 <div class="col-sm-4">
-                    <input type="text" class="form-control" name="new-wof:concordances-name" />
+                    <input type="text" class="form-control" name="new-wof:concordances-name" placeholder="wd:id" />
                 </div>
                 <div class="col-sm-8">
-                    <input type="text" class="form-control" name="new-wof:concordances-value" />
+                    <input type="text" class="form-control" name="new-wof:concordances-value" placeholder="Q1234" />
                 </div>
             </div>
         </div>
