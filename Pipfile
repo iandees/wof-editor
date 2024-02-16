@@ -23,7 +23,7 @@ mapzen-whosonfirst-sources = {editable = true,git = "https://github.com/whosonfi
 mapzen-whosonfirst-uri = {editable = true,git = "https://github.com/whosonfirst/py-mapzen-whosonfirst-uri.git",ref = "master"}
 mapzen-whosonfirst-utils = {editable = true,git = "https://github.com/whosonfirst/py-mapzen-whosonfirst-utils.git",ref = "master"}
 mapzen-whosonfirst-validator = {editable = true,git = "https://github.com/whosonfirst/py-mapzen-whosonfirst-validator.git",ref = "master"}
-requests = "<=2.29.0"
+requests = "*"
 shapely = "<2"
 rauth = "*"
 flask-login = "*"
