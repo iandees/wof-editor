@@ -11,7 +11,7 @@ black = "*"
 arrow = "*"
 atomicwrites = "*"
 edtf = "*"
-flask = ">=2.2.2"
+flask = "*"
 flask-bootstrap = "*"
 geojson = "*"
 gunicorn = "*"
@@ -29,7 +29,7 @@ rauth = "*"
 flask-login = "*"
 
 [requires]
-python_version = "3.10"
+python_version = "3.11"
 
 [pipenv]
 allow_prereleases = true
