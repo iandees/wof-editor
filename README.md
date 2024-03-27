@@ -50,7 +50,7 @@ Then setup pipenv to get into the Python virtual environment you just created wi
 pipenv shell
 ```
 
-4. Run the Flash app locally:
+4. Run the Flask app locally (dev):
 
 ```shell
 FLASK_DEBUG=true FLASK_APP=service_wsgi.py flask run
@@ -59,6 +59,12 @@ FLASK_DEBUG=true FLASK_APP=service_wsgi.py flask run
 The web app can be loaded in a web browser at: 
 
 - [http://127.0.0.1:5000/](http://127.0.0.1:5000/)
+
+If you're testing the Github user auth functionality, you can also run the Flask app with custom configs, like:
+
+```shell
+GITHUB_APP_ID=sample_app_id GITHUB_APP_SECRET=sample_app_secret FLASK_DEBUG=true FLASK_APP=service_wsgi.py flask run
+```
 
 5. Production deploy
 
