@@ -15,13 +15,14 @@ This repository has three core parts:
 ```shell
 git clone git@github.com:iandees/wof-editor.git
 ```
-2. Install dependencies:
 
-From inside your checkout of the repo:
+And move into that checkout:
 
 ```shell
 cd wof-editor
 ```
+
+2. Install dependencies:
 
 Install [pyenv](https://github.com/pyenv/pyenv) to make sure Pipenv has access to the right version of Python:
 
