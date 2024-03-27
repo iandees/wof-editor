@@ -2,10 +2,11 @@
 
 A live version of the tool is available at [writefield.nextzen.org](https://writefield.nextzen.org/).
 
-This repository has three core parts:
+This repository has four core parts:
 
-* `place/`: Business logic for the [Flask](https://flask.palletsprojects.com/en/3.0.x/)-based web editor for Who's On First place gazetteer record properties with a [Leaflet](https://leafletjs.com/)-based map viewer for assorted geometries. User account authentication is via [Github](https://github.com/) to propose a Pull Request with the changes.
+* `place/`: Business logic for the [Flask](https://flask.palletsprojects.com/en/3.0.x/)-based web editor for Who's On First place gazetteer record properties with a [Leaflet](https://leafletjs.com/)-based map viewer for assorted geometries.
 * `templates/`: [Presentation](https://www.digitalocean.com/community/tutorials/how-to-use-templates-in-a-flask-application) logic using HTML templates for each web view, for the Flask app.
+* `auth/`: User account authentication is via [Github](https://github.com/) to propose a Pull Request with the changes for human review by the Who's On First community.
 * `exportify/`: Bundled Python-based tools to validate changes and export as custom formatted Who's On First GeoJSON records that enable quick multi-line property diffs and single-line geometry diffs.
 
 ## Development
