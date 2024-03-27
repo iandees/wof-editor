@@ -68,7 +68,7 @@ GITHUB_APP_ID=sample_app_id GITHUB_APP_SECRET=sample_app_secret FLASK_DEBUG=true
 
 5. Production deploy
 
-Uses [serverless](https://www.serverless.com/framework/docs-providers-aws-guide-deploying) system and assumes access to organization secrets, which are limited access for Github org admins only.
+Uses [serverless](https://www.serverless.com/framework/docs-providers-aws-guide-deploying) system and assumes access to organization secrets and AWS account access (for project admins only).
 
 Create a file `config.prod.yaml` (reference `config.sample.yaml`), with contents like:
 
