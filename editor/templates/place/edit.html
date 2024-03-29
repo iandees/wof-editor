@@ -383,17 +383,17 @@ $(document).ready(function() {
 
     // Add dropdown list for languages
     $('input.wof-input[name="wof:lang_x_spoken"]').tagify({
-        whitelist: {{ lang_expansion.keys()|list|tojson }},
+        allowlist: {{ lang_expansion.keys()|list|tojson }},
     });
     $('input.wof-input[name="wof:lang_x_official"]').tagify({
-        whitelist: {{ lang_expansion.keys()|list|tojson }},
+        allowlist: {{ lang_expansion.keys()|list|tojson }},
     });
     $('input.wof-input[name="wof:placetype_alt"]').tagify();
     $(".use-tagify").tagify({delimiters: null});
 
     // Set up a filter to pick which languages to show
     $("#alternate-names-selected").tagify({
-        whitelist: {{ localized_names_tagify_whitelist|tojson }},
+        allowlist: {{ localized_names_tagify_allowlist|tojson }},
     }).on("add", function(e, tag) {
         var lang = tag.data.lang || tag.data.value;
         var existing = $(".localized-names-row[data-lang=\"" + lang + "\"]").first()
@@ -422,7 +422,7 @@ $(document).ready(function() {
 
     // Set up a filter to pick which languages to show
     $("#localized-labels-selected").tagify({
-        whitelist: {{ localized_labels_tagify_whitelist|tojson }},
+        allowlist: {{ localized_labels_tagify_allowlist|tojson }},
     }).on("add", function(e, tag) {
         var lang = tag.data.lang || tag.data.value;
         var existing = $(".localized-labels-row[data-lang=\"" + lang + "\"]").first()
