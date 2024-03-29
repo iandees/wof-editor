@@ -94,12 +94,12 @@ $(document).ready(function() {
     // TODO: Leaflet requires the layer overlays to be added in incrementing z-order
     //       If you want to reorder, you have to remove all and then add back (omg)
     //       The ideal z-ordering is below (not implemented)
-    var options_default_geom_polygon = {color: geomColors.default};                           // zIndex: 100
-    var options_default_geom_point = {color: geomColors.default};                             // zIndex: 203
-    var options_math_centroid = {color: geomColors.geomCentroid, radius: 5, draggable: true}; // zIndex: 200
-    var options_label_centroid = {color: geomColors.labelPoint, draggable: true};             // zIndex: 202
-    var options_label_bbox = {color: geomColors.labelBbox, draggable: true};                  // zIndex: 101
-    var options_revGeo_centroid = {color: geomColors.revgeoPoint, draggable: true};           // zIndex: 201
+    var options_default_geom_polygon = {color: geomColors.default, title: popup_text_default_geom_polygon};                     // zIndex: 100
+    var options_default_geom_point = {color: geomColors.default, title: popup_text_default_geom_point};                         // zIndex: 203
+    var options_math_centroid = {color: geomColors.geomCentroid, radius: 5, draggable: true, title: popup_text_math_centroid};  // zIndex: 200
+    var options_label_centroid = {color: geomColors.labelPoint, draggable: true, title: popup_text_label_centroid};             // zIndex: 202
+    var options_label_bbox = {color: geomColors.labelBbox, draggable: true, title: popup_text_label_bbox};                      // zIndex: 101
+    var options_revGeo_centroid = {color: geomColors.revgeoPoint, draggable: true, title: popup_text_revGeo_centroid};          // zIndex: 201
     var z_offset_default_geom_polygon = 0;
     var z_offset_default_geom_point = 3;
     var z_offset_math_centroid = 0;
@@ -131,6 +131,8 @@ $(document).ready(function() {
       featureLayer.addData({{ {"type":"Feature","geometry":wof_doc.geometry}|tojson }});
       featureLayer.bindPopup(popup_text_default_geom_point);
       map.fitBounds(featureLayer.getBounds());
+      // TODO: This is more complicated, depending on Polygon or Point we'd update text, too
+      document.getElementById('geom_default').checked = true;
     
       // Only enable polygon drawing if the default geom is a point not a polygon
       {% if wof_doc.geometry['type'] != 'Point' -%}
@@ -155,6 +157,7 @@ $(document).ready(function() {
       enable_rectangle = false;
       count_rectangle++;
       has_label_bbox = true;
+      document.getElementById('geom_label_bounding_box').checked = has_label_bbox;
       {%- endif %}
 
       {% if wof_doc.properties['geom:latitude'] is defined and wof_doc.properties['geom:longitude'] is defined -%}
@@ -164,6 +167,7 @@ $(document).ready(function() {
       // Add the CircleMarker to the drawnItems FeatureGroup to enable editing
       drawnItems.addLayer(geomCentroidLayer);
       has_math_centroid = true;
+      document.getElementById('geom_centroid').checked = has_math_centroid;
       {%- endif %}
 
       {% if wof_doc.properties['lbl:latitude'] is defined and wof_doc.properties['lbl:longitude'] is defined -%}
@@ -174,6 +178,7 @@ $(document).ready(function() {
       drawnItems.addLayer(labelPointLayer);
       count_circlemarker++;
       has_label_centroid = true;
+      document.getElementById('geom_label_centroid').checked = has_label_centroid;
       {%- endif %}
 
       {% if wof_doc.properties['reversegeo:latitude'] is defined and wof_doc.properties['reversegeo:longitude'] is defined -%}
@@ -184,6 +189,7 @@ $(document).ready(function() {
       drawnItems.addLayer(reverseGeoLayer);
       count_circlemarker++;
       has_revGeo_centroid = true;
+      document.getElementById('geom_revgeo_centroid').checked = has_revGeo_centroid;
       {%- endif %}
 
       {% if wof_doc.properties['lbl:latitude'] is defined and wof_doc.properties['lbl:longitude'] is defined and wof_doc.properties['reversegeo:latitude'] is defined and wof_doc.properties['reversegeo:longitude'] is defined -%}
@@ -249,6 +255,10 @@ $(document).ready(function() {
       // to work around bug in the Leaflet Draw plugin, remove it and add it back for new options to take effect
       map.removeControl(drawControl);
       map.addControl(drawControl);
+      
+      document.getElementById('geom_label_bounding_box').checked = has_label_bbox;
+      document.getElementById('geom_label_centroid').checked = has_label_centroid;
+      document.getElementById('geom_revgeo_centroid').checked = has_revGeo_centroid;
     }
 
     map.on('draw:created', function (e) {
@@ -298,11 +308,13 @@ $(document).ready(function() {
                 case popup_text_label_centroid: 
                   has_label_centroid = true;
                   layer.setStyle( options_label_centroid );
+                  document.getElementById('geom_label_centroid').checked = true;
                   // TODO: Add setting of WOF geometry
                   break;
                 case popup_text_revGeo_centroid: 
                   has_revGeo_centroid = true;
                   layer.setStyle(options_revGeo_centroid);
+                  document.getElementById('geom_revgeo_centroid').checked = true;
                   // TODO: Add setting of WOF geometry
                   break;
                 default:
@@ -336,6 +348,7 @@ $(document).ready(function() {
         // (nvkelso 20240329: Test Rectangle before Polygon because of Leaflet bug)
         layer.setStyle( options_label_bbox );
         layer.bindPopup(popup_text_label_bbox);
+        document.getElementById('geom_label_bounding_box').checked = true;
         count_rectangle++;
         has_label_bbox = true;
         updateDrawOptions();
@@ -344,6 +357,7 @@ $(document).ready(function() {
       } else if (layer instanceof L.Polygon) {
         layer.setStyle( options_default_geom_polygon );
         layer.bindPopup(popup_text_default_geom_polygon);
+        document.getElementById('geom_default').checked = true;
         count_polygon++;
         has_default_geom_polygon = true;
         has_default_geom_point = false;
@@ -373,11 +387,34 @@ $(document).ready(function() {
         if (layer instanceof L.CircleMarker) {
           label_centroid = false;
           count_circlemarker--;
-          updateDrawOptions();
         }
         if (layer.options && layer.options.title) {
-          console.log("Deleted layer title:", layer.options.title);
+          console.log("Finished deleting layer title:", layer.options.title);
+        
+          switch( layer.options.title ) {
+            case popup_text_label_centroid: 
+              has_label_centroid = false;
+              // TODO: Add setting of WOF geometry
+              break;
+            case popup_text_revGeo_centroid: 
+              has_revGeo_centroid = false;
+              // TODO: Add setting of WOF geometry
+              break;
+            case popup_text_label_bbox: 
+              has_label_bbox = false;
+              // TODO: Add setting of WOF geometry
+              break;
+            case popup_text_default_geom_polygon: 
+            case popup_text_default_geom_point: 
+            case popup_text_math_centroid: 
+              // TODO: these should warn and the geom restored (and not removed from database)
+              console.log("Ooops, this layer shouldn't be deleted:", layer.options.title);
+              break;
+            default:
+              break;
+          }
         }
+        updateDrawOptions();
       });
     });
 
