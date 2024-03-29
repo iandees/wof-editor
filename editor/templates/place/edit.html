@@ -265,9 +265,27 @@ $(document).ready(function() {
     <h4>Geometries</h4>
     <!-- https://github.com/whosonfirst/whosonfirst-properties/blob/master/properties/wof/name.json -->
     <div class="form-group">
-        <small id="wof-name-help" class="form-text text-muted">Land-only multi-polygons are preferred, points are allowed. Alternate geometries are allowed.</small>
+        {%- if wof_doc.properties['geom:area_square_m'] is defined %}
+        <small id="wof-name-help" class="form-text text-muted">Land-only multi-polygons are preferred, points are allowed. {{ wof_doc.properties['geom:area_square_m'] }} square meters</small>
+        {%- else %}
+        <small id="wof-name-help" class="form-text text-muted">Land-only multi-polygons are preferred, points are allowed.</small>
+        {%- endif %}
         <input type="checkbox" id="geom_default" name="geom_default" value="Default geom" disabled=True checked=True>
-        <label for="geom_default">Default geom</label>&nbsp;<small>(<code>geometry</code>)</small>
+        <label for="geom_default">Default geometry</label>&nbsp;<small>(<code>geometry</code>)</small>
+        {%- if wof_doc.properties['src:geom_alt'] is defined %}
+        <small id="wof-name-help" class="form-text text-muted">Alternate geometries are present from the following {{ wof_doc.properties['src:geom_alt']|length }} sources.</small>
+        <input type="checkbox" id="geom_alternates" name="geom_alternates" value="Alternate geometries" disabled=True checked=True>
+        <label for="geom_default">Alternate geometries</label>&nbsp;<small>(<code>src:geom_alt</code>)</small>
+        {%- for alt_geom in wof_doc.properties['src:geom_alt'] %}
+        <ul class="form-text text-muted">
+            <li class="col-md-2 col-form-label">{{ alt_geom }}</li>
+        </ul>
+        {%- endfor %}
+        {%- else %}
+        <small id="wof-name-help" class="form-text text-muted">Alternate geometries are allowed (none present).</small>
+        <input type="checkbox" id="geom_alternates" name="geom_alternates" value="Alternate geometries" disabled=True>
+        <label for="geom_default">Alternate geometries</label>&nbsp;<small>(<code>src:geom_alt</code>)</small>
+        {%- endif %}
         
         <small id="wof-name-help" class="form-text text-muted">The location of a feature's geometric centroid (can be off the surface). Machine generated.</small>
         {% if wof_doc.properties['geom:latitude'] is defined and wof_doc.properties['geom:longitude'] is defined -%}
