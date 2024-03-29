@@ -62,13 +62,13 @@ $(document).ready(function() {
         maxZoom: 19
     }).addTo(map);
 
-	var drawnItems = new L.FeatureGroup();
-	map.addLayer(drawnItems);
+    var drawnItems = new L.FeatureGroup();
+    map.addLayer(drawnItems);
 
-	map.on('draw:created', function (e) {
-	  var layer = e.layer;
-	  drawnItems.addLayer(layer);
-	});
+    map.on('draw:created', function (e) {
+      var layer = e.layer;
+      drawnItems.addLayer(layer);
+    });
 
     var geomColors = {
         default: '#1f78b4',
@@ -95,7 +95,7 @@ $(document).ready(function() {
     map.fitBounds(featureLayer.getBounds());
     featureLayer.bindPopup("default geometry");
 
-	// Only enable polygon drawing if the default geom is a point not a polygon
+    // Only enable polygon drawing if the default geom is a point not a polygon
     {% if wof_doc.geometry['type'] != 'Point' -%}
     enable_polygons = false;
     {%- endif %}
@@ -108,7 +108,7 @@ $(document).ready(function() {
     );
     var labelBboxLayer = L.rectangle(labelBbox, {color: geomColors.labelBbox, title: 'label bounding box'}).addTo(drawnItems);
     labelBboxLayer.bindPopup("label bounding box");
-	// Disable drawing rectangles if the label bounding box already exists
+    // Disable drawing rectangles if the label bounding box already exists
     enable_rectangle = false;
     {%- endif %}
 
@@ -130,35 +130,26 @@ $(document).ready(function() {
     reverseGeoLayer.bindPopup("reverse geocoding point");
     {%- endif %}
 
-	// Only enable circlemarker if no label centroid and no revgeo centroid
-    if( labelPoint && reverseGeo ) { enable_circlemarker = false; }
+    {% if wof_doc.properties['lbl:latitude'] is defined and wof_doc.properties['lbl:longitude'] is defined and wof_doc.properties['reversegeo:latitude'] is defined and wof_doc.properties['reversegeo:longitude'] is defined -%}
+    enable_circlemarker = false;
+    {%- endif %}
 
-	var drawControl = new L.Control.Draw({
-	  position: 'topright',
-	  draw: {
-		polyline: false,    // Remove line drawing option
-		circle: false,
-		marker: false,
-		circlemarker: enable_circlemarker,
-		polygon: enable_polygons,
-		rectangle: enable_rectangle
-	  },
-	  edit: {
-		featureGroup: drawnItems
-	  }
-	});
-	map.addControl(drawControl);
+    var drawControl = new L.Control.Draw({
+      position: 'topright',
+      draw: {
+        polyline: false,    // Remove line drawing option
+        circle: false,
+        marker: false,
+        circlemarker: enable_circlemarker,
+        polygon: enable_polygons,
+        rectangle: enable_rectangle
+      },
+      edit: {
+        featureGroup: drawnItems
+      }
+    });
+    map.addControl(drawControl);
 
-
-	window.onload = onPageLoad();
-	
-	function onPageLoad() {
-	  if(featureLayer) { document.getElementById("geom_default").checked = true; }
-	  if(geomCentroidLayer) { document.getElementById("geom_math_centroid").checked = true; }
-	  if(labelPointLayer) { document.getElementById("geom_label_centroid").checked = true; }
-	  if(labelBboxLayer) { document.getElementById("geom_label_bounding_box").checked = true; }
-	  if(reverseGeoLayer) { document.getElementById("geom_revgeo_centroid").checked = true; }
-	}
 
     $("input.wof-input").on("change", function() {
         checkValid($(this));
@@ -273,27 +264,39 @@ $(document).ready(function() {
     <!-- https://github.com/whosonfirst/whosonfirst-properties/blob/master/properties/wof/name.json -->
     <div class="form-group">
         <small id="wof-name-help" class="form-text text-muted">Land-only multi-polygons are preferred, points are allowed. Alternate geometries are allowed.</small>
-        {%- if geomCentroidLayer %}
-        <input type="checkbox" id="geom_default" name="geom_default" value="Default geom">
-        {%- else %}
-        <input type="checkbox" id="geom_default" name="geom_default" value="Default geom" checked=True>
-        {%- endif %}
+        <input type="checkbox" id="geom_default" name="geom_default" value="Default geom" disabled=True checked=True>
         <label for="geom_default">Default geom</label>&nbsp;<small>(<code>geometry</code>)</small>
         
         <small id="wof-name-help" class="form-text text-muted">The location of a feature's geometric centroid (can be off the surface). Machine generated.</small>
-        <input type="checkbox" id="geom_centroid" name="geom_centroid" value="Geometric centroid">
+        {% if wof_doc.properties['geom:latitude'] is defined and wof_doc.properties['geom:longitude'] is defined -%}
+        <input type="checkbox" id="geom_centroid" name="geom_centroid" value="Geometric centroid" disabled=True checked=True>
+        {%- else %}
+        <input type="checkbox" id="geom_centroid" name="geom_centroid" value="Geometric centroid" disabled=True>
+        {%- endif %}
         <label for="geom_math_centroid">Math centroid</label>&nbsp;<small>(<code>geom.longitude</code>, <code>geom.latitude</code>)</small>
 
         <small id="wof-name-help" class="form-text text-muted">The coordinate that specifies a label's east-west position (longitude) and north–south position (latitude). Human-generated or derived from mapshaper.</small>
-        <input type="checkbox" id="geom_label_centroid" name="geom_label_centroid" value="Label centroid">
+        {% if wof_doc.properties['lbl:latitude'] is defined and wof_doc.properties['lbl:longitude'] is defined -%}
+        <input type="checkbox" id="geom_label_centroid" name="geom_label_centroid" value="Label centroid" disabled=True checked=True>
+        {%- else %}
+        <input type="checkbox" id="geom_label_centroid" name="geom_label_centroid" value="Label centroid" disabled=True>
+        {%- endif %}
         <label for="geom_label_centroid">Label centroid</label>&nbsp;<small>(<code>lbl.longitude</code>, <code>lbl.latitude</code>)</small>
 
         <small id="wof-name-help" class="form-text text-muted">The bounding box area used purely for map labelling and search purposes, and is usually smaller than the geom:bbox. Human-generated (not derived from Mapshaper).</small>
-        <input type="checkbox" id="geom_label_bounding_box" name="geom_label_bounding_box" value="Label bounding box">
+        {%- if wof_doc.properties['lbl:bbox'] is defined %}
+        <input type="checkbox" id="geom_label_bounding_box" name="geom_label_bounding_box" value="Label bounding box" disabled=True checked=True >
+        {%- else %}
+        <input type="checkbox" id="geom_label_bounding_box" name="geom_label_bounding_box" value="Label bounding box" disabled=True>
+        {%- endif %}
         <label for="geom_label_bounding_box">Label bounding box</label>&nbsp;<small>(<code>lbl.bbox</code>)</small>
 
         <small id="wof-name-help" class="form-text text-muted">Typically derived from mapshaper, represents the centroid to use when reverse geocoding a record to establish the parent hierarchy.</small>
-        <input type="checkbox" id="geom_revgeo_centroid" name="geom_revgeo_centroid" value="Reverse geocoding centroid">
+        {% if wof_doc.properties['reversegeo:latitude'] is defined and wof_doc.properties['reversegeo:longitude'] is defined -%}
+        <input type="checkbox" id="geom_revgeo_centroid" name="geom_revgeo_centroid" value="Reverse geocoding centroid" disabled=True checked=True >
+        {%- else %}
+        <input type="checkbox" id="geom_revgeo_centroid" name="geom_revgeo_centroid" value="Reverse geocoding centroid" disabled=True>
+        {%- endif %}
         <label for="geom_label_centroid">Reverse geocoding centroid</label>&nbsp;<small>(<code>reversegeo.longitude</code>, <code>reversegeo.latitude</code>)</small>
     </div>
     <h4>Common properties</h4>
