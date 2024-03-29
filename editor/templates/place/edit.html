@@ -20,7 +20,7 @@
 {{ super() }}
 <script src="https://unpkg.com/leaflet@1.3.1/dist/leaflet.js" integrity="sha512-/Nsx9X4HebavoBvEBuyp3I7od5tA0UzAxs+j83KgC8PU0kgB4XiK4Lfe4y4cgBtaRJQEIFCW+oC506aPT2L1zw==" crossorigin=""></script>
 <script src="https://unpkg.com/leaflet-ajax@2.1.0/dist/leaflet.ajax.min.js" integrity="sha384-sKs8ZrrxyJoElcPVznZwGpUTTXvkMYfHYxdIFzO8Hd0TA6emONMj8BwnsFf+6cZ/" crossorigin=""></script>
-<script src="https://unpkg.com/leaflet-draw/dist/leaflet.draw.js" integrity="ha384-JP5UPxIO2Tm2o79Fb0tGYMa44jkWar53aBoCbd8ah0+LcCDoohTIYr+zIXyfGIJN" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet-draw/dist/leaflet.draw.js" integrity="sha384-JP5UPxIO2Tm2o79Fb0tGYMa44jkWar53aBoCbd8ah0+LcCDoohTIYr+zIXyfGIJN" crossorigin=""></script>
 <script src="https://unpkg.com/@yaireo/tagify@2.31.6/dist/jQuery.tagify.min.js" integrity="sha384-oJRpUI+TNL56khhVpM5tcGH6Al77rv1qUUKXqmG0cMe5KtcNzLYfxgdcwunFouVe" crossorigin=""></script>
 <script type="text/javascript">
 $(document).ready(function() {
@@ -62,13 +62,7 @@ $(document).ready(function() {
         maxZoom: 19
     }).addTo(map);
 
-    var drawnItems = new L.FeatureGroup();
-    map.addLayer(drawnItems);
-
-    map.on('draw:created', function (e) {
-      var layer = e.layer;
-      drawnItems.addLayer(layer);
-    });
+    var drawnItems = new L.FeatureGroup().addTo(map);
 
     var geomColors = {
         default: '#1f78b4',
@@ -79,62 +73,146 @@ $(document).ready(function() {
     }
     
     // drawControl options are data dependent
-    enable_circlemarker = true;
-    enable_polygons = true;
-    enable_rectangle = true;
+    var count_circlemarker = 0;
+    var count_polygon = 0;
+    var count_rectangle = 0;
+    var enable_circlemarker = true;
+    var enable_polygon = true;
+    var enable_rectangle = true;
+    var has_default_geom_polygon = false;
+    var has_default_geom_point = false;
+    var has_math_centroid = false;
+    var has_label_centroid = false;
+    var has_label_bbox = false;
+    var has_revGeo_centroid = false;
+    var popup_text_default_geom_polygon = "default geometry (polygon)";
+    var popup_text_default_geom_point = "default geometry (point)";
+    var popup_text_math_centroid = "math centroid point";
+    var popup_text_label_centroid = "label point";
+    var popup_text_label_bbox = "label bounding box";
+    var popup_text_revGeo_centroid = "reverse geocoding point";
+    // TODO: Leaflet requires the layer overlays to be added in incrementing z-order
+    //       If you want to reorder, you have to remove all and then add back (omg)
+    //       The ideal z-ordering is below (not implemented)
+    var options_default_geom_polygon = {color: geomColors.default};                           // zIndex: 100
+    var options_default_geom_point = {color: geomColors.default};                             // zIndex: 203
+    var options_math_centroid = {color: geomColors.geomCentroid, radius: 5, draggable: true}; // zIndex: 200
+    var options_label_centroid = {color: geomColors.labelPoint, draggable: true};             // zIndex: 202
+    var options_label_bbox = {color: geomColors.labelBbox, draggable: true};                  // zIndex: 101
+    var options_revGeo_centroid = {color: geomColors.revgeoPoint, draggable: true};           // zIndex: 201
+    var z_offset_default_geom_polygon = 0;
+    var z_offset_default_geom_point = 3;
+    var z_offset_math_centroid = 0;
+    var z_offset_label_centroid = 2;
+    var z_offset_label_bbox = 1;
+    var z_offset_revGeo_centroid = 1;
 
-    var featureLayer = L.geoJSON(null, {
-        pointToLayer: function(pt, latlng) {
-            return L.circleMarker(latlng, {color: geomColors.default});
-        },
-        style: function(f) {
-            return {color: geomColors.default};
-        },
-    }).addTo(drawnItems);
-    featureLayer.addData({{ {"type":"Feature","geometry":wof_doc.geometry}|tojson }});
-    map.fitBounds(featureLayer.getBounds());
-    featureLayer.bindPopup("default geometry");
+    function drawGeoms() {
+      count_circlemarker = 0;
+      count_polygon = 0;
+      count_rectangle = 0;
+      has_default_geom_polygon = false;
+      has_default_geom_point = false;
+      has_math_centroid = false;
+      has_label_centroid = false;
+      has_label_bbox = false;
+      has_revGeo_centroid = false;
 
-    // Only enable polygon drawing if the default geom is a point not a polygon
-    {% if wof_doc.geometry['type'] != 'Point' -%}
-    enable_polygons = false;
-    {%- endif %}
+      var featureLayer = L.geoJSON(null, {
+          pointToLayer: function(pt, latlng) {
+              has_default_geom_polygon = false;
+              has_default_geom_point = true;
+              return L.circleMarker(latlng, options_default_geom_point);
+          },
+          style: function(f) {
+              return options_default_geom_polygon;
+          },
+      }).addTo(drawnItems);
+      featureLayer.addData({{ {"type":"Feature","geometry":wof_doc.geometry}|tojson }});
+      featureLayer.bindPopup(popup_text_default_geom_point);
+      map.fitBounds(featureLayer.getBounds());
+    
+      // Only enable polygon drawing if the default geom is a point not a polygon
+      {% if wof_doc.geometry['type'] != 'Point' -%}
+      featureLayer.bindPopup(popup_text_default_geom_polygon);
+      count_polygon++;
+      enable_polygon = false;
+      has_default_geom_polygon = true;
+      has_default_geom_point = false;
+      {%- endif %}
 
-    {%- if wof_doc.properties['lbl:bbox'] is defined %}
-    {%- set bboxParts = wof_doc.properties['lbl:bbox'].split(",")|list -%}
-    var labelBbox = L.latLngBounds(
-        L.latLng({{ bboxParts[1] }}, {{ bboxParts[0] }}),
-        L.latLng({{ bboxParts[3] }}, {{ bboxParts[2] }}),
-    );
-    var labelBboxLayer = L.rectangle(labelBbox, {color: geomColors.labelBbox, title: 'label bounding box'}).addTo(drawnItems);
-    map.fitBounds(featureLayer.getBounds().extend(labelBboxLayer.getBounds()));
-    // Point default geoms sometimes have a label bounding box that is larger, zoom out to it
-    labelBboxLayer.bindPopup("label bounding box");
-    // Disable drawing rectangles if the label bounding box already exists
-    enable_rectangle = false;
-    {%- endif %}
+      {%- if wof_doc.properties['lbl:bbox'] is defined %}
+      {%- set bboxParts = wof_doc.properties['lbl:bbox'].split(",")|list -%}
+      var labelBbox = L.latLngBounds(
+          L.latLng({{ bboxParts[1] }}, {{ bboxParts[0] }}),
+          L.latLng({{ bboxParts[3] }}, {{ bboxParts[2] }}),
+      );
+      var labelBboxLayer = L.rectangle(labelBbox, options_label_bbox ).addTo(drawnItems);
+      map.fitBounds(featureLayer.getBounds().extend(labelBboxLayer.getBounds()));
+      // Point default geoms sometimes have a label bounding box that is larger, zoom out to it
+      labelBboxLayer.bindPopup(popup_text_label_bbox);
+      // Disable drawing rectangles if the label bounding box already exists
+      enable_rectangle = false;
+      count_rectangle++;
+      has_label_bbox = true;
+      {%- endif %}
 
-    {% if wof_doc.properties['geom:latitude'] is defined and wof_doc.properties['geom:longitude'] is defined -%}
-    var geomCentroid = L.latLng({{ wof_doc.properties['geom:latitude']|float|tojson }}, {{ wof_doc.properties['geom:longitude']|float|tojson }});
-    var geomCentroidLayer = L.circleMarker(geomCentroid, {color: geomColors.geomCentroid, radius: 5, title: 'math centroid point'}).addTo(drawnItems);
-    geomCentroidLayer.bindPopup("math centroid point");
-    {%- endif %}
+      {% if wof_doc.properties['geom:latitude'] is defined and wof_doc.properties['geom:longitude'] is defined -%}
+      var geomCentroid = L.latLng({{ wof_doc.properties['geom:latitude']|float|tojson }}, {{ wof_doc.properties['geom:longitude']|float|tojson }});
+      var geomCentroidLayer = L.circleMarker(geomCentroid, options_math_centroid).addTo(drawnItems);
+      geomCentroidLayer.bindPopup(popup_text_math_centroid);
+      // Add the CircleMarker to the drawnItems FeatureGroup to enable editing
+      drawnItems.addLayer(geomCentroidLayer);
+      has_math_centroid = true;
+      {%- endif %}
 
-    {% if wof_doc.properties['lbl:latitude'] is defined and wof_doc.properties['lbl:longitude'] is defined -%}
-    var labelPoint = L.latLng({{ wof_doc.properties['lbl:latitude']|float|tojson }}, {{ wof_doc.properties['lbl:longitude']|float|tojson }});
-    var labelPointLayer = L.circleMarker(labelPoint, {color: geomColors.labelPoint, title: 'label point'}).addTo(drawnItems);
-    labelPointLayer.bindPopup("label point");
-    {%- endif %}
+      {% if wof_doc.properties['lbl:latitude'] is defined and wof_doc.properties['lbl:longitude'] is defined -%}
+      var labelPoint = L.latLng({{ wof_doc.properties['lbl:latitude']|float|tojson }}, {{ wof_doc.properties['lbl:longitude']|float|tojson }});
+      var labelPointLayer = L.circleMarker(labelPoint, options_label_centroid).addTo(drawnItems);
+      labelPointLayer.bindPopup(popup_text_label_centroid);
+      // Add the CircleMarker to the drawnItems FeatureGroup to enable editing
+      drawnItems.addLayer(labelPointLayer);
+      count_circlemarker++;
+      has_label_centroid = true;
+      {%- endif %}
 
-    {% if wof_doc.properties['reversegeo:latitude'] is defined and wof_doc.properties['reversegeo:longitude'] is defined -%}
-    var reverseGeo = L.latLng({{ wof_doc.properties['reversegeo:latitude']|float|tojson }}, {{ wof_doc.properties['reversegeo:longitude']|float|tojson }});
-    var reverseGeoLayer = L.circleMarker(reverseGeo, {color: geomColors.revgeoPoint, title: 'reverse geocoding point'}).addTo(drawnItems);
-    reverseGeoLayer.bindPopup("reverse geocoding point");
-    {%- endif %}
+      {% if wof_doc.properties['reversegeo:latitude'] is defined and wof_doc.properties['reversegeo:longitude'] is defined -%}
+      var reverseGeo = L.latLng({{ wof_doc.properties['reversegeo:latitude']|float|tojson }}, {{ wof_doc.properties['reversegeo:longitude']|float|tojson }});
+      var reverseGeoLayer = L.circleMarker(reverseGeo, options_revGeo_centroid).addTo(drawnItems);
+      reverseGeoLayer.bindPopup(popup_text_revGeo_centroid);
+      // Add the CircleMarker to the drawnItems FeatureGroup to enable editing
+      drawnItems.addLayer(reverseGeoLayer);
+      count_circlemarker++;
+      has_revGeo_centroid = true;
+      {%- endif %}
 
-    {% if wof_doc.properties['lbl:latitude'] is defined and wof_doc.properties['lbl:longitude'] is defined and wof_doc.properties['reversegeo:latitude'] is defined and wof_doc.properties['reversegeo:longitude'] is defined -%}
-    enable_circlemarker = false;
-    {%- endif %}
+      {% if wof_doc.properties['lbl:latitude'] is defined and wof_doc.properties['lbl:longitude'] is defined and wof_doc.properties['reversegeo:latitude'] is defined and wof_doc.properties['reversegeo:longitude'] is defined -%}
+      enable_circlemarker = false;
+      {%- endif %}
+    }
+    
+    drawGeoms();
+    
+    // Define a custom Leaflet control for the reset button
+    var ResetButton = L.Control.extend({
+      onAdd: function(map) {
+        var button = L.DomUtil.create('button', 'leaflet-control-reset');
+        button.innerHTML = 'Reset geometries';
+        button.title = 'Reset geometries';
+
+        L.DomEvent.on(button, 'click', function() {
+          drawnItems.clearLayers();
+          // Add your logic to restore earlier state if necessary
+          drawGeoms();
+          updateDrawOptions();
+        });
+
+        return button;
+      }
+    });
+
+    // Create an instance of the custom control and add it to the map
+    new ResetButton({ position: 'topright' }).addTo(map);
 
     var drawControl = new L.Control.Draw({
       position: 'topright',
@@ -143,7 +221,7 @@ $(document).ready(function() {
         circle: false,
         marker: false,
         circlemarker: enable_circlemarker,
-        polygon: enable_polygons,
+        polygon: enable_polygon,
         rectangle: enable_rectangle
       },
       edit: {
@@ -151,10 +229,156 @@ $(document).ready(function() {
       }
     });
     map.addControl(drawControl);
+    
+    function updateDrawOptions() {
+      if( count_circlemarker >= 2 ) {
+        drawControl.setDrawingOptions({ circlemarker: false });
+      } else {
+        drawControl.setDrawingOptions({ circlemarker: true });
+      }
+      if( count_polygon >= 1 ) {
+        drawControl.setDrawingOptions({ polygon: false });
+      } else {
+        drawControl.setDrawingOptions({ polygon: true });
+      }
+      if( count_rectangle >= 1 ) {
+        drawControl.setDrawingOptions({ rectangle: false });
+      } else {
+        drawControl.setDrawingOptions({ rectangle: true });
+      }
+      // to work around bug in the Leaflet Draw plugin, remove it and add it back for new options to take effect
+      map.removeControl(drawControl);
+      map.addControl(drawControl);
+    }
 
+    map.on('draw:created', function (e) {
+      var layer = e.layer;
+      
+      if (layer instanceof L.CircleMarker) {
+        if (count_circlemarker>=2) {
+          map.removeLayer(layer);
+          return;
+        }
+        circleMarkerAdded = true;
+        drawControl.setDrawingOptions({ marker: false }); // Disable marker drawing option
+        
+        count_circlemarker++;
+        updateDrawOptions();
 
+        var labelPrompt = document.createElement('div');
+        labelPrompt.innerHTML = `
+          <p><b>Select the label type:</b></p>
+        `;
+        if( !has_label_centroid ) {
+          // (nvkelso 20240329: whitespace in value + popup_text var is meaningful)
+          labelPrompt.innerHTML += `
+            <input type="radio" id="label" name="labelType" value="` + popup_text_label_centroid + `">
+            <label for="label">Label Centroid</label><br>
+          `;
+        }
+        if( !has_revGeo_centroid ) {
+          labelPrompt.innerHTML += `
+            <input type="radio" id="reverse" name="labelType" value="` + popup_text_revGeo_centroid + `">
+            <label for="reverse">Reverse Geocoding Centroid</label><br>
+          `;
+        }
+        labelPrompt.innerHTML += `
+        <button id="submitLabelType">Submit</button>
+        `;
+
+        L.DomEvent.disableClickPropagation(labelPrompt);
+
+        L.DomEvent.on(labelPrompt, 'click', function (e) {
+          if (e.target.id === 'submitLabelType') {
+            var selectedRadio = labelPrompt.querySelector('input[name="labelType"]:checked');
+            if (selectedRadio) {
+              labelType = selectedRadio.value;
+              
+              switch( labelType ) {
+                case popup_text_label_centroid: 
+                  has_label_centroid = true;
+                  layer.setStyle( options_label_centroid );
+                  // TODO: Add setting of WOF geometry
+                  break;
+                case popup_text_revGeo_centroid: 
+                  has_revGeo_centroid = true;
+                  layer.setStyle(options_revGeo_centroid);
+                  // TODO: Add setting of WOF geometry
+                  break;
+                default:
+                  //console.log( labelType );
+                  break;
+              }
+              
+              layer.options.title = labelType;
+              layer.bindPopup(labelType);
+
+              // TODO: Should block adding new circlemarkers until the dialog is submitted
+              // TODO: Something here blocks editing of the added layer?
+              drawnItems.addLayer(layer);
+              map.removeControl(labelPrompt);
+            } else {
+              alert('Please select a label type.');
+            }
+          }
+        });
+
+        labelPrompt.style.position = 'absolute'; // Set position to absolute
+        labelPrompt.style.top = '10px'; // Adjust top position
+        labelPrompt.style.left = '10px'; // Adjust left position
+        labelPrompt.style.zIndex = 1000; // Set higher z-index
+        labelPrompt.style.backgroundColor = 'white'; // Set background color
+        labelPrompt.style.border = '2px solid black'; // Set border
+        labelPrompt.style.padding = '10px'; // Add padding
+      
+        map.getContainer().appendChild(labelPrompt);
+      } else if (layer instanceof L.Rectangle) {
+        // (nvkelso 20240329: Test Rectangle before Polygon because of Leaflet bug)
+        layer.setStyle( options_label_bbox );
+        layer.bindPopup(popup_text_label_bbox);
+        count_rectangle++;
+        has_label_bbox = true;
+        updateDrawOptions();
+        // TODO: Add setting of WOF geometry
+        drawnItems.addLayer(layer);
+      } else if (layer instanceof L.Polygon) {
+        layer.setStyle( options_default_geom_polygon );
+        layer.bindPopup(popup_text_default_geom_polygon);
+        count_polygon++;
+        has_default_geom_polygon = true;
+        has_default_geom_point = false;
+        updateDrawOptions();
+        // TODO: Add setting of WOF geometry
+        // TODO: Will require moving the old default point geom to an alt (with new file), and source tracking
+        drawnItems.addLayer(layer);
+      }
+    });
+
+    map.on('draw:edited', function (e) {
+      var layers = e.layers;
+      layers.eachLayer(function (layer) {
+        if (layer.options && layer.options.title) {
+          console.log("Edited layer title:", layer.options.title);
+        }
+      });
+    });
     $("input.wof-input").on("change", function() {
         checkValid($(this));
+    });
+
+    // Add event listener to modify label_centroid when a marker is deleted
+    map.on('draw:deleted', function (e) {
+      var layers = e.layers;
+      layers.eachLayer(function (layer) {
+        if (layer instanceof L.CircleMarker) {
+          label_centroid = false;
+          count_circlemarker--;
+          updateDrawOptions();
+        }
+        if (layer.options && layer.options.title) {
+          console.log("Deleted layer title:", layer.options.title);
+        }
+      });
     });
 
     // Add dropdown list for languages
@@ -268,7 +492,7 @@ $(document).ready(function() {
         <small id="wof-name-help" class="form-text text-muted">Land-only multi-polygons are preferred, points are allowed.</small>
         <input type="checkbox" id="geom_default" name="geom_default" value="Default geom" disabled=True checked=True>
         {%- if wof_doc.properties['geom:area_square_m'] is defined %}
-        <label for="geom_default">Default geometry</label>&nbsp;<small>(<code>geometry</code> sourced from <code>{{ wof_doc.properties['src:geom'] }}</code> is {{ wof_doc.properties['geom:area_square_m'] }} square meters)</small>
+        <label for="geom_default">Default geometry</label>&nbsp;<small>(<code>geometry</code> sourced from <code>{{ wof_doc.properties['src:geom'] }}</code> is {{ wof_doc.properties['geom:area_square_m']|int }} square meters)</small>
         {%- else %}
         <label for="geom_default">Default geometry</label>&nbsp;<small>(<code>geometry</code> sourced from <code>{{ wof_doc.properties['src:geom'] }}</code>)</small>
         {%- endif %}
