@@ -1,6 +1,6 @@
 {%- extends "_template.html" %}
 
-{%- block title %}{{ super() }} : Edit {{ wof_doc.properties['wof:name'] or woc_doc.id }} {%- endblock %}
+{%- block title %}{{ super() }} : Edit {{ wof_doc.properties['wof:name'] or woc_doc.id }}{%- endblock %}
 
 {%- block styles %}
 {{ super() }}
@@ -262,8 +262,7 @@ $(document).ready(function() {
 {%- endblock %}
 
 {%- block content %}
-<h3>Editing {{ wof_doc.properties['wof:name'] or wof_doc.id }}</h3>
-<small>(<a href="https://spelunker.whosonfirst.org/id/{{ wof_doc.id }}/">View on Spelunker</a>)</small>
+<h3>Editing {{ wof_doc.properties['wof:name'] or wof_doc.id }}</h3><small>(<a href="https://spelunker.whosonfirst.org/id/{{ wof_doc.id }}/">View on Spelunker</a>)</small>
 
 <div class="row col-md-12 mb-4">
     <div id="map"></div>
