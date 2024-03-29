@@ -1,6 +1,6 @@
 {%- extends "_template.html" %}
 
-{%- block title %}{{ super() }} : Edit {{ wof_doc.properties['wof:name'] or woc_doc.id }}{%- endblock %}
+{%- block title %}{{ super() }} : Edit {{ wof_doc.properties['wof:name'] or woc_doc.id }} {%- endblock %}
 
 {%- block styles %}
 {{ super() }}
@@ -93,20 +93,11 @@ $(document).ready(function() {
     }).addTo(drawnItems);
     featureLayer.addData({{ {"type":"Feature","geometry":wof_doc.geometry}|tojson }});
     map.fitBounds(featureLayer.getBounds());
+    featureLayer.bindPopup("default geometry");
 
 	// Only enable polygon drawing if the default geom is a point not a polygon
     {% if wof_doc.geometry['type'] != 'Point' -%}
     enable_polygons = false;
-    {%- endif %}
-
-    {% if wof_doc.properties['geom:latitude'] is defined and wof_doc.properties['geom:longitude'] is defined -%}
-    var geomCentroid = L.latLng({{ wof_doc.properties['geom:latitude']|float|tojson }}, {{ wof_doc.properties['geom:longitude']|float|tojson }});
-    var geomCentroidLayer = L.circleMarker(geomCentroid, {color: geomColors.geomCentroid, radius: 5, title: 'math centroid point'}).addTo(drawnItems);
-    {%- endif %}
-
-    {% if wof_doc.properties['lbl:latitude'] is defined and wof_doc.properties['lbl:longitude'] is defined -%}
-    var labelPoint = L.latLng({{ wof_doc.properties['lbl:latitude']|float|tojson }}, {{ wof_doc.properties['lbl:longitude']|float|tojson }});
-    var labelPointLayer = L.circleMarker(labelPoint, {color: geomColors.labelPoint, title: 'label point'}).addTo(drawnItems);
     {%- endif %}
 
     {%- if wof_doc.properties['lbl:bbox'] is defined %}
@@ -116,13 +107,27 @@ $(document).ready(function() {
         L.latLng({{ bboxParts[3] }}, {{ bboxParts[2] }}),
     );
     var labelBboxLayer = L.rectangle(labelBbox, {color: geomColors.labelBbox, title: 'label bounding box'}).addTo(drawnItems);
+    labelBboxLayer.bindPopup("label bounding box");
 	// Disable drawing rectangles if the label bounding box already exists
     enable_rectangle = false;
+    {%- endif %}
+
+    {% if wof_doc.properties['geom:latitude'] is defined and wof_doc.properties['geom:longitude'] is defined -%}
+    var geomCentroid = L.latLng({{ wof_doc.properties['geom:latitude']|float|tojson }}, {{ wof_doc.properties['geom:longitude']|float|tojson }});
+    var geomCentroidLayer = L.circleMarker(geomCentroid, {color: geomColors.geomCentroid, radius: 5, title: 'math centroid point'}).addTo(drawnItems);
+    geomCentroidLayer.bindPopup("math centroid point");
+    {%- endif %}
+
+    {% if wof_doc.properties['lbl:latitude'] is defined and wof_doc.properties['lbl:longitude'] is defined -%}
+    var labelPoint = L.latLng({{ wof_doc.properties['lbl:latitude']|float|tojson }}, {{ wof_doc.properties['lbl:longitude']|float|tojson }});
+    var labelPointLayer = L.circleMarker(labelPoint, {color: geomColors.labelPoint, title: 'label point'}).addTo(drawnItems);
+    labelPointLayer.bindPopup("label point");
     {%- endif %}
 
     {% if wof_doc.properties['reversegeo:latitude'] is defined and wof_doc.properties['reversegeo:longitude'] is defined -%}
     var reverseGeo = L.latLng({{ wof_doc.properties['reversegeo:latitude']|float|tojson }}, {{ wof_doc.properties['reversegeo:longitude']|float|tojson }});
     var reverseGeoLayer = L.circleMarker(reverseGeo, {color: geomColors.revgeoPoint, title: 'reverse geocoding point'}).addTo(drawnItems);
+    reverseGeoLayer.bindPopup("reverse geocoding point");
     {%- endif %}
 
 	// Only enable circlemarker if no label centroid and no revgeo centroid
@@ -257,7 +262,8 @@ $(document).ready(function() {
 {%- endblock %}
 
 {%- block content %}
-<h3>Editing {{ wof_doc.properties['wof:name'] or wof_doc.id }}</h3><small>(<a href="https://spelunker.whosonfirst.org/id/{{ wof_doc.id }}/">View on Spelunker</a>)</small>
+<h3>Editing {{ wof_doc.properties['wof:name'] or wof_doc.id }}</h3>
+<small>(<a href="https://spelunker.whosonfirst.org/id/{{ wof_doc.id }}/">View on Spelunker</a>)</small>
 
 <div class="row col-md-12 mb-4">
     <div id="map"></div>
