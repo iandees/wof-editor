@@ -107,6 +107,8 @@ $(document).ready(function() {
         L.latLng({{ bboxParts[3] }}, {{ bboxParts[2] }}),
     );
     var labelBboxLayer = L.rectangle(labelBbox, {color: geomColors.labelBbox, title: 'label bounding box'}).addTo(drawnItems);
+    map.fitBounds(featureLayer.getBounds().extend(labelBboxLayer.getBounds()));
+    // Point default geoms sometimes have a label bounding box that is larger, zoom out to it
     labelBboxLayer.bindPopup("label bounding box");
     // Disable drawing rectangles if the label bounding box already exists
     enable_rectangle = false;
