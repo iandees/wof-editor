@@ -433,6 +433,10 @@ def edit_place():
                         except ValueError:
                             raise ValidationException("Concordance %s must be an integer" % new_key)
                     wof_doc['properties']['wof:concordances'][new_key] = new_value
+
+            # Update geometries
+            if request.form.get('lbl:bbox'):
+                wof_doc['properties']['lbl:bbox'] = request.form['lbl:bbox']
         except ValidationException as e:
             flash("Problem validating changes: %s" % e)
             return redirect(request.url)

@@ -257,6 +257,7 @@ $(document).ready(function() {
       map.addControl(drawControl);
       
       document.getElementById('geom_label_bounding_box').checked = has_label_bbox;
+      document.getElementById('geom_label_bounding_box_text').value = "{{ wof_doc.properties['lbl:bbox'] }}";
       document.getElementById('geom_label_centroid').checked = has_label_centroid;
       document.getElementById('geom_revgeo_centroid').checked = has_revGeo_centroid;
     }
@@ -352,7 +353,7 @@ $(document).ready(function() {
         count_rectangle++;
         has_label_bbox = true;
         updateDrawOptions();
-        // TODO: Add setting of WOF geometry
+        document.getElementById('geom_label_bounding_box_text').value = `${layer.getBounds().getWest().toFixed(6)},${layer.getBounds().getSouth().toFixed(6)},${layer.getBounds().getEast().toFixed(6)},${layer.getBounds().getNorth().toFixed(6)}`;
         drawnItems.addLayer(layer);
       } else if (layer instanceof L.Polygon) {
         layer.setStyle( options_default_geom_polygon );
