@@ -437,6 +437,15 @@ def edit_place():
             # Update geometries
             if request.form.get('lbl:bbox'):
                 wof_doc['properties']['lbl:bbox'] = request.form['lbl:bbox']
+            if request.form.get('lbl:centroid'):
+                lng, lat = request.form.get('lbl:centroid').split(',')
+                wof_doc['properties']['lbl:longitude'] = float(lng)
+                wof_doc['properties']['lbl:latitude'] = float(lat)
+            if request.form.get('reversegeo:centroid'):
+                lng, lat = request.form.get('reversegeo:centroid').split(',')
+                wof_doc['properties']['reversegeo:longitude'] = float(lng)
+                wof_doc['properties']['reversegeo:latitude'] = float(lat)
+
         except ValidationException as e:
             flash("Problem validating changes: %s" % e)
             return redirect(request.url)
