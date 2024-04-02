@@ -107,6 +107,8 @@ $(document).ready(function() {
     var z_offset_label_bbox = 1;
     var z_offset_revGeo_centroid = 1;
     
+    $("#geometries_section").collapse();
+    
     function drawGeoms() {
       count_circlemarker = 0;
       count_polygon = 0;
@@ -133,7 +135,8 @@ $(document).ready(function() {
       map.fitBounds(featureLayer.getBounds());
       // TODO: This is more complicated, depending on Polygon or Point we'd update text, too
       document.getElementById('geom_default').checked = true;
-    
+      document.getElementById('geom_default_text').value = "{{ wof_doc.geometry['coordinates'] }}";
+
       // Only enable polygon drawing if the default geom is a point not a polygon
       {% if wof_doc.geometry['type'] != 'Point' -%}
       featureLayer.bindPopup(popup_text_default_geom_polygon);
@@ -158,6 +161,7 @@ $(document).ready(function() {
       count_rectangle++;
       has_label_bbox = true;
       document.getElementById('geom_label_bounding_box').checked = has_label_bbox;
+      document.getElementById('geom_label_bounding_box_text').value = "{{ wof_doc.properties['lbl:bbox'] }}";
       {%- endif %}
 
       {% if wof_doc.properties['geom:latitude'] is defined and wof_doc.properties['geom:longitude'] is defined -%}
@@ -167,7 +171,8 @@ $(document).ready(function() {
       // Add the CircleMarker to the drawnItems FeatureGroup to enable editing
       drawnItems.addLayer(geomCentroidLayer);
       has_math_centroid = true;
-      document.getElementById('geom_centroid').checked = has_math_centroid;
+      document.getElementById('geom_math_centroid').checked = has_math_centroid;
+      document.getElementById('geom_math_centroid_text').value = "{{ wof_doc.properties['geom:longitude'] }}, {{ wof_doc.properties['geom:latitude'] }}";
       {%- endif %}
 
       {% if wof_doc.properties['lbl:latitude'] is defined and wof_doc.properties['lbl:longitude'] is defined -%}
@@ -179,6 +184,7 @@ $(document).ready(function() {
       count_circlemarker++;
       has_label_centroid = true;
       document.getElementById('geom_label_centroid').checked = has_label_centroid;
+      document.getElementById('geom_label_centroid_text').value = "{{ wof_doc.properties['lbl:longitude'] }}, {{ wof_doc.properties['lbl:latitude'] }}";
       {%- endif %}
 
       {% if wof_doc.properties['reversegeo:latitude'] is defined and wof_doc.properties['reversegeo:longitude'] is defined -%}
@@ -190,6 +196,7 @@ $(document).ready(function() {
       count_circlemarker++;
       has_revGeo_centroid = true;
       document.getElementById('geom_revgeo_centroid').checked = has_revGeo_centroid;
+      document.getElementById('geom_revgeo_centroid_text').value = "{{ wof_doc.properties['reversegeo:longitude'] }}, {{ wof_doc.properties['reversegeo:latitude'] }}";
       {%- endif %}
 
       {% if wof_doc.properties['lbl:latitude'] is defined and wof_doc.properties['lbl:longitude'] is defined and wof_doc.properties['reversegeo:latitude'] is defined and wof_doc.properties['reversegeo:longitude'] is defined -%}
@@ -255,11 +262,6 @@ $(document).ready(function() {
       // to work around bug in the Leaflet Draw plugin, remove it and add it back for new options to take effect
       map.removeControl(drawControl);
       map.addControl(drawControl);
-      
-      document.getElementById('geom_label_bounding_box').checked = has_label_bbox;
-      document.getElementById('geom_label_bounding_box_text').value = "{{ wof_doc.properties['lbl:bbox'] }}";
-      document.getElementById('geom_label_centroid').checked = has_label_centroid;
-      document.getElementById('geom_revgeo_centroid').checked = has_revGeo_centroid;
     }
 
     map.on('draw:created', function (e) {
@@ -310,13 +312,13 @@ $(document).ready(function() {
                   has_label_centroid = true;
                   layer.setStyle( options_label_centroid );
                   document.getElementById('geom_label_centroid').checked = true;
-                  // TODO: Add setting of WOF geometry
+                  document.getElementById('geom_label_centroid_text').value = `${layer.getLatLng().lng.toFixed(6)},${layer.getLatLng().lat.toFixed(6)}`;
                   break;
                 case popup_text_revGeo_centroid: 
                   has_revGeo_centroid = true;
                   layer.setStyle(options_revGeo_centroid);
                   document.getElementById('geom_revgeo_centroid').checked = true;
-                  // TODO: Add setting of WOF geometry
+                  document.getElementById('geom_revgeo_centroid_text').value = `${layer.getLatLng().lng.toFixed(6)},${layer.getLatLng().lat.toFixed(6)}`;
                   break;
                 default:
                   //console.log( labelType );
@@ -353,6 +355,7 @@ $(document).ready(function() {
         count_rectangle++;
         has_label_bbox = true;
         updateDrawOptions();
+        // needs to be after GUI setting
         document.getElementById('geom_label_bounding_box_text').value = `${layer.getBounds().getWest().toFixed(6)},${layer.getBounds().getSouth().toFixed(6)},${layer.getBounds().getEast().toFixed(6)},${layer.getBounds().getNorth().toFixed(6)}`;
         drawnItems.addLayer(layer);
       } else if (layer instanceof L.Polygon) {
@@ -363,7 +366,8 @@ $(document).ready(function() {
         has_default_geom_polygon = true;
         has_default_geom_point = false;
         updateDrawOptions();
-        // TODO: Add setting of WOF geometry
+        // needs to be after GUI setting
+        document.getElementById('geom_default_text').value = layer.toGeoJSON()["geometry"]["coordinates"];
         // TODO: Will require moving the old default point geom to an alt (with new file), and source tracking
         drawnItems.addLayer(layer);
       }
@@ -487,15 +491,15 @@ $(document).ready(function() {
     // Default to showing English only
     $("#localized-labels-selected").data("tagify").addTags([{"lang": "eng", "value": "English (eng)"}]);
 
-    // Toggle show/hide of geometries section
-    $("#show-hide-geoms").on("click", function(e) {
-      var x = document.getElementById("geometries_section");
-      if (x.style.display === "none") {
-        x.style.display = "block";
-      } else {
-        x.style.display = "none";
-      }
-    });
+    // // Toggle show/hide of geometries section
+//     $("#show-hide-geoms").on("click", function(e) {
+//       var x = document.getElementById("geometries_section");
+//       if (x.style.display === "none") {
+//         x.style.display = "block";
+//       } else {
+//         x.style.display = "none";
+//       }
+//     });
 
     // Perform validation before submitting form
     $("button[name=\"next-step\"]").on("click", function(e) {
@@ -522,11 +526,6 @@ $(document).ready(function() {
         newRow.find('input[name="new-wof:concordances-value"]').attr("name", "new-wof:concordances-value" + $(".concordance-row").length);
         newRow.show();
     });
-    
-    // TODO: This doesn't work
-    $(document).ready(function(){
-      $("#geometries_section").collapse();
-    });
 });
 </script>
 {%- endblock %}
@@ -550,7 +549,7 @@ $(document).ready(function() {
           {%- else %}
           <label for="geom_default">Default geometry</label>&nbsp;<small>({{ wof_doc.geometry['type'] }} <code>geometry["coordinates"]</code> sourced from <code>{{ wof_doc.properties['src:geom'] }}</code>)</small>
           {%- endif %}
-          <input type="input" id="geom_default_text" name="geom:coordinates" value="{{ wof_doc.geometry['coordinates'] }}" class="form-control wof-input">
+          <input type="input" id="geom_default_text" name="geom:coordinates" value="" class="form-control wof-input">
           <small id="wof-name-help" class="form-text text-muted">Land-only multi-polygons are preferred, points are allowed. If water is included, please add a land-based reverse geocoding centroid.</small>
       </div>
       <div class="form-group">
@@ -571,24 +570,23 @@ $(document).ready(function() {
       </div>
       <div class="form-group">
           {% if wof_doc.properties['geom:latitude'] is defined and wof_doc.properties['geom:longitude'] is defined -%}
-          <input type="checkbox" id="geom_centroid" name="geom_centroid" value="Geometric centroid" disabled=True checked=True>
+          <input type="checkbox" id="geom_math_centroid" name="geom_math_centroid" value="Geometric centroid" disabled=True checked=True>
           {%- else %}
-          <input type="checkbox" id="geom_centroid" name="geom_centroid" value="Geometric centroid" disabled=True>
+          <input type="checkbox" id="geom_math_centroid" name="geom_math_centroid" value="Geometric centroid" disabled=True>
           {%- endif %}
           <label for="geom_math_centroid">Math centroid</label>&nbsp;<small>(<code>geom:longitude</code>, <code>geom:latitude</code>)</small>
-          <input disabled type="input" id="geom_math_centroid_text" name="geom:centroid" value="{{ wof_doc.properties['geom:longitude'] }}, {{ wof_doc.properties['geom:latitude'] }}" class="form-control wof-input">
+          <input disabled type="input" id="geom_math_centroid_text" name="geom:centroid" value="" class="form-control wof-input" data-wof-validation-regex="^([-+]?[0-9]*\.?\d+),\s*([-+]?[0-9]*\.?\d+)$">
           <small id="wof-name-help" class="form-text text-muted">The location of a feature's geometric centroid (can be off the surface). Machine generated.</small>
       </div>
       <div class="form-group">
           {% if wof_doc.properties['lbl:latitude'] is defined and wof_doc.properties['lbl:longitude'] is defined -%}
           <input type="checkbox" id="geom_label_centroid" name="geom_label_centroid" value="Label centroid" disabled=True checked=True>
           <label for="geom_label_centroid">Label centroid</label>&nbsp;<small>(<code>lbl:longitude</code>, <code>lbl:latitude</code>)</small>
-          <input type="input" id="geom_label_centroid_text" name="lbl:centroid" value="{{ wof_doc.properties['lbl:longitude'] }}, {{ wof_doc.properties['lbl:latitude'] }}" class="form-control wof-input">
           {%- else %}
           <input type="checkbox" id="geom_label_centroid" name="geom_label_centroid" value="Label centroid" disabled=True>
           <label for="geom_label_centroid">Label centroid</label>&nbsp;<small>(<code>lbl:longitude</code>, <code>lbl:latitude</code>)</small>
-          <input type="input" id="geom_label_centroid_text" name="lbl:centroid" value="" class="form-control wof-input">
           {%- endif %}
+          <input type="input" id="geom_label_centroid_text" name="lbl:centroid" value="" class="form-control wof-input" data-wof-validation-regex="^([-+]?[0-9]*\.?\d+),\s*([-+]?[0-9]*\.?\d+)$">
           <small id="wof-name-help" class="form-text text-muted">The coordinate that specifies a label's east-west position (longitude) and north–south position (latitude). Human-generated or derived from mapshaper.</small>
       </div>
       <div class="form-group">
@@ -598,19 +596,18 @@ $(document).ready(function() {
           <input type="checkbox" id="geom_label_bounding_box" name="geom_label_bounding_box" value="Label bounding box" disabled=True>
           {%- endif %}
           <label for="geom_label_bounding_box">Label bounding box</label>&nbsp;<small>(<code>lbl:bbox</code>)</small>
-          <input type="input" id="geom_label_bounding_box_text" name="lbl:bbox" value="{{ wof_doc.properties['lbl:bbox'] }}" class="form-control wof-input">
+          <input type="input" id="geom_label_bounding_box_text" name="lbl:bbox" value="{{ wof_doc.properties['lbl:bbox'] }}" class="form-control wof-input" data-wof-validation-regex="^([-+]?[0-9]*\.?\d+),\s*([-+]?[0-9]*\.?\d+),\s*([-+]?[0-9]*\.?\d+),\s*([-+]?[0-9]*\.?\d+)$">
           <small id="wof-name-help" class="form-text text-muted">Used for map viewports and search. Usually smaller than the geom:bbox for polygons but larger for points. Human-generated.</small>
       </div>
       <div class="form-group">
           {% if wof_doc.properties['reversegeo:latitude'] is defined and wof_doc.properties['reversegeo:longitude'] is defined -%}
           <input type="checkbox" id="geom_revgeo_centroid" name="geom_revgeo_centroid" value="Reverse geocoding centroid" disabled=True checked=True >
           <label for="geom_label_centroid">Reverse geocoding centroid</label>&nbsp;<small>(<code>reversegeo:longitude</code>, <code>reversegeo:latitude</code>)</small>
-          <input type="input" id="geom_label_centroid_text" name="reversegeo:centroid" value="{{ wof_doc.properties['reversegeo:longitude'] }}, {{ wof_doc.properties['reversegeo:latitude'] }}" class="form-control wof-input">
           {%- else %}
           <input type="checkbox" id="geom_revgeo_centroid" name="geom_revgeo_centroid" value="Reverse geocoding centroid" disabled=True>
           <label for="geom_label_centroid">Reverse geocoding centroid</label>&nbsp;<small>(<code>reversegeo:longitude</code>, <code>reversegeo:latitude</code>)</small>
-          <input type="input" id="geom_label_centroid_text" name="reversegeo:centroid" value="" class="form-control wof-input">
           {%- endif %}
+          <input type="input" id="geom_revgeo_centroid_text" name="reversegeo:centroid" value="" class="form-control wof-input" data-wof-validation-regex="^([-+]?[0-9]*\.?\d+),\s*([-+]?[0-9]*\.?\d+)$">
           <small id="wof-name-help" class="form-text text-muted">Represents the centroid to use when reverse geocoding a record to establish the parent hierarchy, preferably on land. Typically derived from mapshaper.</small>
       </div>
     </div>
@@ -648,7 +645,7 @@ $(document).ready(function() {
     </div>
     <!-- https://github.com/whosonfirst/whosonfirst-properties/blob/master/properties/mz/is_funky.json -->
     <div class="form-group">
-        <label for="mz-is_funky">Disabled</label>&nbsp;<small>(<code>mz:is_funky</code>)</small>
+        <label for="mz-is_funky">Disabled</label>&nbsp;<small>(<code>mz:is_funky</code>)</small> 
         <input type="text" class="form-control wof-input" name="mz:is_funky" data-wof-validation-regex="^(-1|0|1)$" value="{{ wof_doc.properties['mz:is_funky'] }}">
         <small id="mz-is_funky-help" class="form-text text-muted">Used when Mapzen suspects the record is bad or inappropriate but additional confirmation is needed before the feature is deprecated. Records with a 1 value are recommended to be hidden from map display and search unless explicitly asked for by name.</small>
     </div>
