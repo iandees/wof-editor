@@ -160,9 +160,9 @@ $(document).ready(function() {
       enable_rectangle = false;
       count_rectangle++;
       has_label_bbox = true;
+      {%- endif %}
       document.getElementById('geom_label_bounding_box').checked = has_label_bbox;
       document.getElementById('geom_label_bounding_box_text').value = "{{ wof_doc.properties['lbl:bbox'] }}";
-      {%- endif %}
 
       {% if wof_doc.properties['geom:latitude'] is defined and wof_doc.properties['geom:longitude'] is defined -%}
       var geomCentroid = L.latLng({{ wof_doc.properties['geom:latitude']|float|tojson }}, {{ wof_doc.properties['geom:longitude']|float|tojson }});
@@ -171,9 +171,11 @@ $(document).ready(function() {
       // Add the CircleMarker to the drawnItems FeatureGroup to enable editing
       drawnItems.addLayer(geomCentroidLayer);
       has_math_centroid = true;
-      document.getElementById('geom_math_centroid').checked = has_math_centroid;
       document.getElementById('geom_math_centroid_text').value = "{{ wof_doc.properties['geom:longitude'] }}, {{ wof_doc.properties['geom:latitude'] }}";
+      {%- else %}
+      document.getElementById('geom_math_centroid_text').value = "";
       {%- endif %}
+      document.getElementById('geom_math_centroid').checked = has_math_centroid;
 
       {% if wof_doc.properties['lbl:latitude'] is defined and wof_doc.properties['lbl:longitude'] is defined -%}
       var labelPoint = L.latLng({{ wof_doc.properties['lbl:latitude']|float|tojson }}, {{ wof_doc.properties['lbl:longitude']|float|tojson }});
@@ -183,9 +185,11 @@ $(document).ready(function() {
       drawnItems.addLayer(labelPointLayer);
       count_circlemarker++;
       has_label_centroid = true;
-      document.getElementById('geom_label_centroid').checked = has_label_centroid;
       document.getElementById('geom_label_centroid_text').value = "{{ wof_doc.properties['lbl:longitude'] }}, {{ wof_doc.properties['lbl:latitude'] }}";
+      {%- else %}
+      document.getElementById('geom_label_centroid_text').value = "";
       {%- endif %}
+      document.getElementById('geom_label_centroid').checked = has_label_centroid;
 
       {% if wof_doc.properties['reversegeo:latitude'] is defined and wof_doc.properties['reversegeo:longitude'] is defined -%}
       var reverseGeo = L.latLng({{ wof_doc.properties['reversegeo:latitude']|float|tojson }}, {{ wof_doc.properties['reversegeo:longitude']|float|tojson }});
@@ -195,9 +199,11 @@ $(document).ready(function() {
       drawnItems.addLayer(reverseGeoLayer);
       count_circlemarker++;
       has_revGeo_centroid = true;
-      document.getElementById('geom_revgeo_centroid').checked = has_revGeo_centroid;
       document.getElementById('geom_revgeo_centroid_text').value = "{{ wof_doc.properties['reversegeo:longitude'] }}, {{ wof_doc.properties['reversegeo:latitude'] }}";
+      {%- else %}
+      document.getElementById('geom_revgeo_centroid_text').value = "";
       {%- endif %}
+      document.getElementById('geom_revgeo_centroid').checked = has_revGeo_centroid;
 
       {% if wof_doc.properties['lbl:latitude'] is defined and wof_doc.properties['lbl:longitude'] is defined and wof_doc.properties['reversegeo:latitude'] is defined and wof_doc.properties['reversegeo:longitude'] is defined -%}
       enable_circlemarker = false;
