@@ -390,6 +390,22 @@ $(document).ready(function() {
     $("input.wof-input").on("change", function() {
         checkValid($(this));
     });
+    
+    $("#geom_label_centroid_text").on("change", function(event) {
+        console.log('TODO: Add label centroid at: ', event.target.value);
+    });
+    $("#geom_label_bounding_box_text").on("change", function(event) {
+        console.log('TODO: Add label bbox: ', event.target.value);
+    });
+    $("#geom_revgeo_centroid_text").on("change", function(event) {
+        console.log('TODO: Add revGeo centroid at: ', event.target.value);
+    });
+    
+//     const inputElement = document.getElementById('geom_label_centroid');
+//     inputElement.addEventListener('change', function(event) {
+//       // Log the new value to the console
+//       console.log('New value:', event.target.value);
+//     });
 
     // Add event listener to modify label_centroid when a marker is deleted
     map.on('draw:deleted', function (e) {
@@ -586,7 +602,7 @@ $(document).ready(function() {
       </div>
       <div class="form-group">
           {% if wof_doc.properties['lbl:latitude'] is defined and wof_doc.properties['lbl:longitude'] is defined -%}
-          <input type="checkbox" id="geom_label_centroid" name="geom_label_centroid" value="Label centroid" disabled=True checked=True>
+          <input type="checkbox" id="geom_label_centroid" name="geom_label_centroid" value="Label centroid" checked=True>
           <label for="geom_label_centroid">Label centroid</label>&nbsp;<small>(<code>lbl:longitude</code>, <code>lbl:latitude</code>)</small>
           {%- else %}
           <input type="checkbox" id="geom_label_centroid" name="geom_label_centroid" value="Label centroid" disabled=True>
@@ -597,7 +613,7 @@ $(document).ready(function() {
       </div>
       <div class="form-group">
           {%- if wof_doc.properties['lbl:bbox'] is defined %}
-          <input type="checkbox" id="geom_label_bounding_box" name="geom_label_bounding_box" value="Label bounding box" disabled=True checked=True >
+          <input type="checkbox" id="geom_label_bounding_box" name="geom_label_bounding_box" value="Label bounding box" checked=True >
           {%- else %}
           <input type="checkbox" id="geom_label_bounding_box" name="geom_label_bounding_box" value="Label bounding box" disabled=True>
           {%- endif %}
@@ -607,7 +623,7 @@ $(document).ready(function() {
       </div>
       <div class="form-group">
           {% if wof_doc.properties['reversegeo:latitude'] is defined and wof_doc.properties['reversegeo:longitude'] is defined -%}
-          <input type="checkbox" id="geom_revgeo_centroid" name="geom_revgeo_centroid" value="Reverse geocoding centroid" disabled=True checked=True >
+          <input type="checkbox" id="geom_revgeo_centroid" name="geom_revgeo_centroid" value="Reverse geocoding centroid" checked=True >
           <label for="geom_label_centroid">Reverse geocoding centroid</label>&nbsp;<small>(<code>reversegeo:longitude</code>, <code>reversegeo:latitude</code>)</small>
           {%- else %}
           <input type="checkbox" id="geom_revgeo_centroid" name="geom_revgeo_centroid" value="Reverse geocoding centroid" disabled=True>
