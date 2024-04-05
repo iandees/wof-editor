@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.1/dist/leaflet.css" integrity="sha512-Rksm5RenBEKSKFjgI3a41vrjkw4EVPlJ3+OiI65vTjIdo9brlAacEuKOiQ5OFh7cOI1bkDwLqdLw3Zg0cRJAAQ==" crossorigin=""/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet-draw/dist/leaflet.draw.css" integrity="sha384-NZLkVuBRMEeB4VeZz27WwTRvlhec30biQ8Xx7zG7JJnkvEKRg5qi6BNbEXo9ydwv"" crossorigin=""/>
 <link rel="stylesheet" href="https://unpkg.com/@yaireo/tagify@2.31.6/dist/tagify.css" integrity="sha384-VgQsYt/GtydzxrFEKS4D9VXB6lLQ4cXbFwdorV5HIkxXY8N9e1gJCl36seX6wYYP" crossorigin=""/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol@v0.79.0/dist/L.Control.Locate.min.css" integrity="sha384-s1weW3rLvQEcQo1OenCYWESkNoaaT6C995dZ4jgUAt+qkjhTNQoN8mhu6ZwQzWNS" crossorigin=""/>
 <style type="text/css">
     #map {
         width: 100%;
@@ -22,6 +23,7 @@
 <script src="https://unpkg.com/leaflet-ajax@2.1.0/dist/leaflet.ajax.min.js" integrity="sha384-sKs8ZrrxyJoElcPVznZwGpUTTXvkMYfHYxdIFzO8Hd0TA6emONMj8BwnsFf+6cZ/" crossorigin=""></script>
 <script src="https://unpkg.com/leaflet-draw/dist/leaflet.draw.js" integrity="sha384-JP5UPxIO2Tm2o79Fb0tGYMa44jkWar53aBoCbd8ah0+LcCDoohTIYr+zIXyfGIJN" crossorigin=""></script>
 <script src="https://unpkg.com/@yaireo/tagify@2.31.6/dist/jQuery.tagify.min.js" integrity="sha384-oJRpUI+TNL56khhVpM5tcGH6Al77rv1qUUKXqmG0cMe5KtcNzLYfxgdcwunFouVe" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet.locatecontrol@v0.79.0/dist/L.Control.Locate.min.js"  integrity="sha384-XF7O0sxpctKl96bCyBgbgdQbnHDg/ek0LdbWrVUmx/LPh4EDtdIsGculgF93z6wW" crossorigin=""></script>
 <script type="text/javascript">
 $(document).ready(function() {
     function checkValid(field) {
@@ -61,6 +63,8 @@ $(document).ready(function() {
         minZoom: 0,
         maxZoom: 19
     }).addTo(map);
+
+    L.control.locate().addTo(map);
 
     var drawnItems = new L.FeatureGroup().addTo(map);
 
