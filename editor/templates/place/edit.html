@@ -377,7 +377,7 @@ $(document).ready(function() {
         has_default_geom_point = false;
         updateDrawOptions();
         // needs to be after GUI setting
-        document.getElementById('geom_default_text').value = layer.toGeoJSON()["geometry"]["coordinates"];
+        document.getElementById('geom_default_text').value = JSON.stringify(layer.toGeoJSON()["geometry"]["coordinates"]);
         // TODO: Will require moving the old default point geom to an alt (with new file), and source tracking
         drawnItems.addLayer(layer);
       }
