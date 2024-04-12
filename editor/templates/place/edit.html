@@ -446,36 +446,32 @@ $(document).ready(function() {
        
           // Loop through each layer on the map
           map.eachLayer(function(layer) {
-              // Check if the layer has a 'title' property and if it is equal to "foo"
               if (layer.options && layer.options.title === whichLayer) {
-                  // Move the layer on the map
                   layer.setLatLng([newLat, newLng]);
               }
           });
         } else if( whichLayer == popup_text_label_bbox ) {
-//           var inputLocation = document.getElementById('geom_label_bounding_box_text').value;
-// 
-//           // Split the input value on comma and parse latitude and longitude as floats
-//           var bboxParts = inputLocation.split(',');
-//           
-//           var labelBbox2 = L.latLngBounds(
-//               L.latLng(parseFloat(bboxParts[1]), parseFloat(bboxParts[0])),
-//               L.latLng(parseFloat(bboxParts[3]), parseFloat(bboxParts[2]))
-//           );
-//        
-//           // Loop through each layer on the map
-//           map.eachLayer(function(layer) {
-//               // Check if the layer has a 'title' property and if it is equal to "foo"
-//               if (layer.options && layer.options.title === whichLayer) {
-//                   // Move the layer on the map
-//                   layer.setBounds(labelBbox2);
-//               }
-//           });
+          var inputLocation = document.getElementById('geom_label_bounding_box_text').value;
+
+          // Split the input value on comma and parse latitude and longitude as floats
+          var bboxParts = inputLocation.split(',');
+          
+          var labelBbox2 = L.latLngBounds(
+              L.latLng(parseFloat(bboxParts[1]), parseFloat(bboxParts[0])),
+              L.latLng(parseFloat(bboxParts[3]), parseFloat(bboxParts[2]))
+          );
+       
+          // Loop through each layer on the map
+          map.eachLayer(function(layer) {
+              if (layer.options && layer.options.title === whichLayer) {
+                  layer.setBounds(labelBbox2);
+              }
+          });
         }
     }
 
     // This happens on "save" of the editing session
-    map.on('draw:edited', function (e) {
+    map.on('pm:edit', function (e) {
       var layers = e.layers;
       layers.eachLayer(function (layer) {
         if (layer.options && layer.options.title) {
@@ -497,7 +493,6 @@ $(document).ready(function() {
         removeLayer(popup_text_label_centroid);
     });
     $("#geom_label_centroid_text").on("change", function(event) {
-        console.log('TODO: Move label centroid to: ', event.target.value);
         updateLayer(popup_text_label_centroid);
     });
     $("#geom_label_bounding_box").on("change", function(event) {
@@ -509,7 +504,6 @@ $(document).ready(function() {
         removeLayer(popup_text_label_bbox);
     });
     $("#geom_label_bounding_box_text").on("change", function(event) {
-        console.log('TODO: Move label bbox to: ', event.target.value);
         updateLayer(popup_text_label_bbox);
     });
     $("#geom_revgeo_centroid").on("change", function(event) {
@@ -521,18 +515,12 @@ $(document).ready(function() {
         removeLayer(popup_text_revGeo_centroid);
     });
     $("#geom_revgeo_centroid_text").on("change", function(event) {
-        console.log('TODO: Move revGeo centroid to: ', event.target.value);
         updateLayer(popup_text_revGeo_centroid);
     });
     
-//     const inputElement = document.getElementById('geom_label_centroid');
-//     inputElement.addEventListener('change', function(event) {
-//       // Log the new value to the console
-//       console.log('New value:', event.target.value);
-//     });
-
     // Add event listener to modify label_centroid when a marker is deleted
-    map.on('draw:deleted', function (e) {
+    map.on('pm:update', function (e) {
+      console.log(e);
       var layers = e.layers;
       layers.eachLayer(function (layer) {
         if (layer instanceof L.CircleMarker) {
