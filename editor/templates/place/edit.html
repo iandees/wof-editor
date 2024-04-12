@@ -354,12 +354,14 @@ $(document).ready(function() {
                   has_label_centroid = true;
                   layer.setStyle( options_label_centroid );
                   document.getElementById('geom_label_centroid').checked = true;
+                  document.getElementById('geom_label_centroid').disabled = false;
                   document.getElementById('geom_label_centroid_text').value = `${layer.getLatLng().lng.toFixed(6)},${layer.getLatLng().lat.toFixed(6)}`;
                   break;
                 case popup_text_revGeo_centroid: 
                   has_revGeo_centroid = true;
                   layer.setStyle(options_revGeo_centroid);
                   document.getElementById('geom_revgeo_centroid').checked = true;
+                  document.getElementById('geom_revgeo_centroid').disabled = false;
                   document.getElementById('geom_revgeo_centroid_text').value = `${layer.getLatLng().lng.toFixed(6)},${layer.getLatLng().lat.toFixed(6)}`;
                   break;
                 default:
@@ -367,7 +369,7 @@ $(document).ready(function() {
                   break;
               }
               
-              layer.options.title = labelType;
+              layer.title = labelType;
               layer.bindPopup(labelType);
 
               // TODO: Should block adding new circlemarkers until the dialog is submitted
@@ -392,8 +394,10 @@ $(document).ready(function() {
       } else if (shape == 'Rectangle') {
         // (nvkelso 20240329: Test Rectangle before Polygon because of Leaflet bug)
         layer.setStyle( options_label_bbox );
+        layer.title = popup_text_label_bbox;
         layer.bindPopup(popup_text_label_bbox);
         document.getElementById('geom_label_bounding_box').checked = true;
+        document.getElementById('geom_label_bounding_box').disabled = false;
         count_rectangle++;
         has_label_bbox = true;
         updateDrawOptions();
@@ -402,6 +406,7 @@ $(document).ready(function() {
         drawnItems.addLayer(layer);
       } else if (shape == 'Polygon') {
         layer.setStyle( options_default_geom_polygon );
+        layer.title = popup_text_default_geom_polygon;
         layer.bindPopup(popup_text_default_geom_polygon);
         document.getElementById('geom_default').checked = true;
         count_polygon++;
@@ -414,6 +419,60 @@ $(document).ready(function() {
         drawnItems.addLayer(layer);
       }
     });
+    
+    function removeLayer(whichLayer) {
+        // Loop through each layer on the map
+        map.eachLayer(function(layer) {
+            // Check if the layer has a 'title' property and if it is equal to "foo"
+            if (layer.options && layer.options.title === whichLayer) {
+                // Remove the layer from the map
+                map.removeLayer(layer);
+            }
+        });
+    }
+    
+    function updateLayer(whichLayer) {
+        if( whichLayer == popup_text_label_centroid || whichLayer == popup_text_revGeo_centroid) {
+          if( whichLayer == popup_text_label_centroid ) {
+            var inputLocation = document.getElementById('geom_label_centroid_text').value;
+          } else if( whichLayer == popup_text_revGeo_centroid ) {
+            var inputLocation = document.getElementById('geom_revgeo_centroid_text').value;
+          }
+        
+          // Split the input value on comma and parse latitude and longitude as floats
+          var newLocationArray = inputLocation.split(',');
+          var newLat = parseFloat(newLocationArray[1]);
+          var newLng = parseFloat(newLocationArray[0]);
+       
+          // Loop through each layer on the map
+          map.eachLayer(function(layer) {
+              // Check if the layer has a 'title' property and if it is equal to "foo"
+              if (layer.options && layer.options.title === whichLayer) {
+                  // Move the layer on the map
+                  layer.setLatLng([newLat, newLng]);
+              }
+          });
+        } else if( whichLayer == popup_text_label_bbox ) {
+//           var inputLocation = document.getElementById('geom_label_bounding_box_text').value;
+// 
+//           // Split the input value on comma and parse latitude and longitude as floats
+//           var bboxParts = inputLocation.split(',');
+//           
+//           var labelBbox2 = L.latLngBounds(
+//               L.latLng(parseFloat(bboxParts[1]), parseFloat(bboxParts[0])),
+//               L.latLng(parseFloat(bboxParts[3]), parseFloat(bboxParts[2]))
+//           );
+//        
+//           // Loop through each layer on the map
+//           map.eachLayer(function(layer) {
+//               // Check if the layer has a 'title' property and if it is equal to "foo"
+//               if (layer.options && layer.options.title === whichLayer) {
+//                   // Move the layer on the map
+//                   layer.setBounds(labelBbox2);
+//               }
+//           });
+        }
+    }
 
     // This happens on "save" of the editing session
     map.on('draw:edited', function (e) {
@@ -429,14 +488,41 @@ $(document).ready(function() {
         checkValid($(this));
     });
     
+    $("#geom_label_centroid").on("change", function(event) {
+        event.target.disabled = true;
+        document.getElementById('geom_label_centroid_text').value = '';
+        count_circlemarker--;
+        has_label_centroid = false;
+        updateDrawOptions();
+        removeLayer(popup_text_label_centroid);
+    });
     $("#geom_label_centroid_text").on("change", function(event) {
-        console.log('TODO: Add label centroid at: ', event.target.value);
+        console.log('TODO: Move label centroid to: ', event.target.value);
+        updateLayer(popup_text_label_centroid);
+    });
+    $("#geom_label_bounding_box").on("change", function(event) {
+        event.target.disabled = true;
+        document.getElementById('geom_label_bounding_box_text').value = '';
+        count_rectangle--;
+        has_label_bbox = false;
+        updateDrawOptions();
+        removeLayer(popup_text_label_bbox);
     });
     $("#geom_label_bounding_box_text").on("change", function(event) {
-        console.log('TODO: Add label bbox: ', event.target.value);
+        console.log('TODO: Move label bbox to: ', event.target.value);
+        updateLayer(popup_text_label_bbox);
+    });
+    $("#geom_revgeo_centroid").on("change", function(event) {
+        event.target.disabled = true;
+        document.getElementById('geom_revgeo_centroid_text').value = '';
+        count_circlemarker--;
+        has_revGeo_centroid = false;
+        updateDrawOptions();
+        removeLayer(popup_text_revGeo_centroid);
     });
     $("#geom_revgeo_centroid_text").on("change", function(event) {
-        console.log('TODO: Add revGeo centroid at: ', event.target.value);
+        console.log('TODO: Move revGeo centroid to: ', event.target.value);
+        updateLayer(popup_text_revGeo_centroid);
     });
     
 //     const inputElement = document.getElementById('geom_label_centroid');
@@ -651,7 +737,7 @@ $(document).ready(function() {
       </div>
       <div class="form-group">
           {%- if wof_doc.properties['lbl:bbox'] is defined %}
-          <input type="checkbox" id="geom_label_bounding_box" name="geom_label_bounding_box" value="Label bounding box" checked=True >
+          <input type="checkbox" id="geom_label_bounding_box" name="geom_label_bounding_box" value="Label bounding box" checked=True>
           {%- else %}
           <input type="checkbox" id="geom_label_bounding_box" name="geom_label_bounding_box" value="Label bounding box" disabled=True>
           {%- endif %}
@@ -661,7 +747,7 @@ $(document).ready(function() {
       </div>
       <div class="form-group">
           {% if wof_doc.properties['reversegeo:latitude'] is defined and wof_doc.properties['reversegeo:longitude'] is defined -%}
-          <input type="checkbox" id="geom_revgeo_centroid" name="geom_revgeo_centroid" value="Reverse geocoding centroid" checked=True >
+          <input type="checkbox" id="geom_revgeo_centroid" name="geom_revgeo_centroid" value="Reverse geocoding centroid" checked=True>
           <label for="geom_label_centroid">Reverse geocoding centroid</label>&nbsp;<small>(<code>reversegeo:longitude</code>, <code>reversegeo:latitude</code>)</small>
           {%- else %}
           <input type="checkbox" id="geom_revgeo_centroid" name="geom_revgeo_centroid" value="Reverse geocoding centroid" disabled=True>
