@@ -269,46 +269,47 @@ $(document).ready(function() {
     // Create an instance of the custom control and add it to the map
     new ResetButton({ position: 'topright' }).addTo(map);
 
-    // add Leaflet-Geoman controls with some options to the map  
-    var drawControl = map.pm.addControls({  
-      position: 'topright',  
-      drawPolyline: false,    // Remove line drawing option
-      drawCircle: false,
-      drawMarker: false,
-      drawText: false,
-      cutPolygon: false,
-      drawCirclemarker: enable_circlemarker,
-      drawPolygon: enable_polygon,
-      drawRectangle: enable_rectangle
-    });
+    // add Leaflet-Geoman controls with some options to the map
+    function addDrawControls() {
+      var drawControl = map.pm.addControls({  
+        position: 'topright',  
+        drawPolyline: false,    // Remove line drawing option
+        drawCircle: false,
+        drawMarker: false,
+        drawText: false,
+        cutPolygon: false,
+        drawCircleMarker: enable_circlemarker,
+        drawPolygon: enable_polygon,
+        drawRectangle: enable_rectangle
+      });
+    }
     
     function updateDrawOptions() {
+      map.pm.disableDraw();
       if( count_circlemarker >= 2 ) {
-        map.pm.setGlobalOptions({drawCirclemarker: false});
+        enable_circlemarker = false;
       } else {
-        map.pm.setGlobalOptions({drawCirclemarker: true});
+        enable_circlemarker = true;
       }
       if( count_polygon >= 1 ) {
-        map.pm.setGlobalOptions({drawPolygon: false});
+        enable_polygon = false;
       } else {
-        map.pm.setGlobalOptions({drawPolygon: true});
+        enable_polygon = true;
       }
       if( count_rectangle >= 1 ) {
-        map.pm.setGlobalOptions({drawRectangle: false});
+        enable_rectangle = false;
       } else {
-        map.pm.setGlobalOptions({drawRectangle: true});
+        enable_rectangle = true;
       }
-      // to work around bug in the Leaflet Draw plugin, remove it and add it back for new options to take effect
-      map.removeControl(drawControl);
-      map.addControl(drawControl);
+      map.pm.removeControls();
+      addDrawControls();
     }
 
+    updateDrawOptions();
+    
     map.on('pm:create', function (e) {
       var layer = e.layer;
       var shape = e.shape;
-      
-      console.log(layer);
-      console.log(shape);
       
       if (shape == 'CircleMarker') {
         if (count_circlemarker>=2) {
@@ -316,8 +317,6 @@ $(document).ready(function() {
           return;
         }
         circleMarkerAdded = true;
-        drawControl.setDrawingOptions({ marker: false }); // Disable marker drawing option
-        
         count_circlemarker++;
         updateDrawOptions();
 
