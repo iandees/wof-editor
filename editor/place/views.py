@@ -334,6 +334,7 @@ def edit_place():
     wof_id = wof_doc['id']
     file_path = 'data/' + build_wof_doc_url_suffix(wof_id)
     place_name = wof_doc['properties'].get('wof:name')
+    place_type = wof_doc['properties'].get('wof:placetype')
 
     # Put localized_names and labels information in a more convenient container
     localized_names = parse_prefix_map(wof_doc['properties'], 'name:')
@@ -688,7 +689,7 @@ def edit_place():
         resp = sess.post(
             'https://api.github.com/repos/%s/pulls' % (base_repo,),
             json={
-                "title": "Update Place %s" % (place_name or wof_id),
+                "title": "Update %s %s" % (place_type or 'place', place_name or wof_id),
                 "head": (fork_owner + branch_name),
                 "base": "master",
                 "body": "Updating `%s` using the [WOF Editor](https://github.com/iandees/wof-editor)" % file_path,
