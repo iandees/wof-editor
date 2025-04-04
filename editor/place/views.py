@@ -222,7 +222,7 @@ def mz_bool(i):
 
 
 def apply_change(wof, form, attr_name, formatter=None):
-    new_value = form[attr_name]
+    new_value = form.get(attr_name)
     old_value = wof['properties'].get(attr_name)
 
     formatter = formatter or str
