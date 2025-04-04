@@ -140,6 +140,15 @@ def favicon():
     )
 
 
+@place_bp.route('/robots.txt')
+def robots_txt():
+    response = make_response("""User-agent: *
+Disallow: /
+""")
+    response.headers["Content-Type"] = "text/plain"
+    return response
+
+
 def log_response(resp):
     return json.dumps({
         "request": {
