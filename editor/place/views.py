@@ -42,6 +42,7 @@ label_specs = {
     "variant_abbreviation": "Variant Abbrev.",
     "variant_disambiguation": "Variant Disambiguation",
     "variant_longname": "Variant Longname",
+    "variant_placetype": "Variant Placetype",
     "variant_shortcode": "Variant Shortcode",
 }
 spec_expansion = dict(**name_specs, **label_specs)
