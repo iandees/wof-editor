@@ -389,6 +389,8 @@ def edit_place():
             apply_change(wof_doc, request.form, "edtf:deprecated")
             apply_change(wof_doc, request.form, "edtf:inception")
             apply_change(wof_doc, request.form, "edtf:superseded")
+            apply_change(wof_doc, request.form, "wof:superseded_by")
+            apply_change(wof_doc, request.form, "wof:supersedes", list_of_int)
             apply_change(wof_doc, request.form, "wof:population", maybe_int)
             apply_change(wof_doc, request.form, "mz:min_zoom", maybe_float)
             apply_change(wof_doc, request.form, "mz:max_zoom", maybe_float)
