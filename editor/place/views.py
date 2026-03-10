@@ -350,23 +350,23 @@ def edit_place():
     localized_names = parse_prefix_map(wof_doc['properties'], 'name:')
     localized_labels = parse_prefix_map(wof_doc['properties'], 'label:')
 
-    localized_names_tagify_whitelist = []
+    localized_names_tagify_allowlist = []
     for lang in localized_names.keys():
         lang_expanded = lang_expansion.get(lang)
         search_by = [lang, lang_expanded] if lang_expanded else [lang]
 
-        localized_names_tagify_whitelist.append({
+        localized_names_tagify_allowlist.append({
             "lang": lang,
             "value": "%s (%s)" % (lang_expanded, lang) if lang_expanded else lang,
             "searchBy": search_by,
         })
 
-    localized_labels_tagify_whitelist = []
+    localized_labels_tagify_allowlist = []
     for lang in localized_labels.keys():
         lang_expanded = lang_expansion.get(lang)
         search_by = [lang, lang_expanded] if lang_expanded else [lang]
 
-        localized_labels_tagify_whitelist.append({
+        localized_labels_tagify_allowlist.append({
             "lang": lang,
             "value": "%s (%s)" % (lang_expanded, lang) if lang_expanded else lang,
             "searchBy": search_by,
@@ -444,6 +444,19 @@ def edit_place():
                         except ValueError:
                             raise ValidationException("Concordance %s must be an integer" % new_key)
                     wof_doc['properties']['wof:concordances'][new_key] = new_value
+
+            # Update geometries
+            if request.form.get('lbl:bbox'):
+                wof_doc['properties']['lbl:bbox'] = request.form['lbl:bbox']
+            if request.form.get('lbl:centroid'):
+                lng, lat = request.form.get('lbl:centroid').split(',')
+                wof_doc['properties']['lbl:longitude'] = float(lng)
+                wof_doc['properties']['lbl:latitude'] = float(lat)
+            if request.form.get('reversegeo:centroid'):
+                lng, lat = request.form.get('reversegeo:centroid').split(',')
+                wof_doc['properties']['reversegeo:longitude'] = float(lng)
+                wof_doc['properties']['reversegeo:latitude'] = float(lat)
+
         except ValidationException as e:
             flash("Problem validating changes: %s" % e)
             return redirect(request.url)
@@ -736,8 +749,8 @@ def edit_place():
         lang_expansion=lang_expansion,
         name_specs=name_specs,
         localized_names=localized_names,
-        localized_names_tagify_whitelist=localized_names_tagify_whitelist,
+        localized_names_tagify_allowlist=localized_names_tagify_allowlist,
         label_specs=label_specs,
         localized_labels=localized_labels,
-        localized_labels_tagify_whitelist=localized_labels_tagify_whitelist,
+        localized_labels_tagify_allowlist=localized_labels_tagify_allowlist,
     )
