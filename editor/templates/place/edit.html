@@ -5,7 +5,12 @@
 {%- block styles %}
 {{ super() }}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.1/dist/leaflet.css" integrity="sha512-Rksm5RenBEKSKFjgI3a41vrjkw4EVPlJ3+OiI65vTjIdo9brlAacEuKOiQ5OFh7cOI1bkDwLqdLw3Zg0cRJAAQ==" crossorigin=""/>
+<!-- 
+<link rel="stylesheet" href="https://unpkg.com/leaflet-draw/dist/leaflet.draw.css" integrity="sha384-NZLkVuBRMEeB4VeZz27WwTRvlhec30biQ8Xx7zG7JJnkvEKRg5qi6BNbEXo9ydwv"" crossorigin=""/>
+ -->
+<link rel="stylesheet" href="https://unpkg.com/@geoman-io/leaflet-geoman-free@latest/dist/leaflet-geoman.css" integrity="sha384-kFHJXoxnyoGXzCN/jBWXbLGVLIsjMOz3OflpKpSJorRSOY++lYGPt8VoHurVr94q" crossorigin=""/>
 <link rel="stylesheet" href="https://unpkg.com/@yaireo/tagify@2.31.6/dist/tagify.css" integrity="sha384-VgQsYt/GtydzxrFEKS4D9VXB6lLQ4cXbFwdorV5HIkxXY8N9e1gJCl36seX6wYYP" crossorigin=""/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol@v0.79.0/dist/L.Control.Locate.min.css" integrity="sha384-s1weW3rLvQEcQo1OenCYWESkNoaaT6C995dZ4jgUAt+qkjhTNQoN8mhu6ZwQzWNS" crossorigin=""/>
 <style type="text/css">
     #map {
         width: 100%;
@@ -19,7 +24,12 @@
 {{ super() }}
 <script src="https://unpkg.com/leaflet@1.3.1/dist/leaflet.js" integrity="sha512-/Nsx9X4HebavoBvEBuyp3I7od5tA0UzAxs+j83KgC8PU0kgB4XiK4Lfe4y4cgBtaRJQEIFCW+oC506aPT2L1zw==" crossorigin=""></script>
 <script src="https://unpkg.com/leaflet-ajax@2.1.0/dist/leaflet.ajax.min.js" integrity="sha384-sKs8ZrrxyJoElcPVznZwGpUTTXvkMYfHYxdIFzO8Hd0TA6emONMj8BwnsFf+6cZ/" crossorigin=""></script>
+<!-- 
+<script src="https://unpkg.com/leaflet-draw/dist/leaflet.draw.js" integrity="sha384-JP5UPxIO2Tm2o79Fb0tGYMa44jkWar53aBoCbd8ah0+LcCDoohTIYr+zIXyfGIJN" crossorigin=""></script>
+ -->
+<script src="https://unpkg.com/@geoman-io/leaflet-geoman-free@latest/dist/leaflet-geoman.js" integrity="sha384-ld2Q6oJGnECCjh+LLDcIWiAxD4lZGgdYvhwDcp4Uhw23A8VSqQcD7YOoNHdwPjQc" crossorigin=""/></script>
 <script src="https://unpkg.com/@yaireo/tagify@2.31.6/dist/jQuery.tagify.min.js" integrity="sha384-oJRpUI+TNL56khhVpM5tcGH6Al77rv1qUUKXqmG0cMe5KtcNzLYfxgdcwunFouVe" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet.locatecontrol@v0.79.0/dist/L.Control.Locate.min.js"  integrity="sha384-XF7O0sxpctKl96bCyBgbgdQbnHDg/ek0LdbWrVUmx/LPh4EDtdIsGculgF93z6wW" crossorigin=""></script>
 <script type="text/javascript">
 $(document).ready(function() {
     function checkValid(field) {
@@ -54,11 +64,41 @@ $(document).ready(function() {
     }
 
     var map = L.map('map', {preferCanvas: true});
-    var baseLayer = L.tileLayer('https://tiles.stadiamaps.com/tiles/stamen_toner_lite/{z}/{x}/{y}{r}.png', {
+
+    // Base tile layers
+    var tonerLayer = L.tileLayer('https://tiles.stadiamaps.com/tiles/stamen_toner_lite/{z}/{x}/{y}{r}.png', {
         attribution: 'Map tiles by &copy; <a href="https://stadiamaps.com/" target="_blank">Stadia Maps</a> <a href="https://stamen.com/" target="_blank">&copy; Stamen Design</a> &copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>',
         minZoom: 0,
         maxZoom: 19
-    }).addTo(map);
+    });
+
+    var satelliteLayer = L.tileLayer('https://api.maptiler.com/maps/hybrid/{z}/{x}/{y}.jpg?key=Qi6Rx9Ks63CEDCgxcjET', {
+      attribution: '&copy; <a href="https://www.maptiler.com/">MapTiler</a>',
+      maxZoom: 19,
+    });
+
+    var osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    });
+
+    // Layer control to switch between tile layers
+    var baseLayers = {
+      "Toner": tonerLayer,
+      "Satellite Hybrid": satelliteLayer,
+      "OpenStreetMap": osmLayer
+    };
+
+    // Add default Toner layer to map
+    tonerLayer.addTo(map);
+
+    // Enable switching between map layers
+    var layerControl = L.control.layers(baseLayers, {}, { position: 'bottomleft' });
+    layerControl.addTo(map);
+
+    // Enable GPS based location for field work
+    L.control.locate().addTo(map);
+
+    var drawnItems = new L.FeatureGroup().addTo(map);
 
     var geomColors = {
         default: '#1f78b4',
@@ -67,59 +107,469 @@ $(document).ready(function() {
         labelBbox: '#fb9a99',
         revgeoPoint: '#b2df8a',
     }
+    
+    // drawControl options are data dependent
+    var count_circlemarker = 0;
+    var count_polygon = 0;
+    var count_rectangle = 0;
+    var enable_circlemarker = true;
+    var enable_polygon = true;
+    var enable_rectangle = true;
+    var has_default_geom_polygon = false;
+    var has_default_geom_point = false;
+    var has_math_centroid = false;
+    var has_label_centroid = false;
+    var has_label_bbox = false;
+    var has_revGeo_centroid = false;
+    var popup_text_default_geom_polygon = "default geometry (polygon)";
+    var popup_text_default_geom_point = "default geometry (point)";
+    var popup_text_math_centroid = "math centroid point";
+    var popup_text_label_centroid = "label point";
+    var popup_text_label_bbox = "label bounding box";
+    var popup_text_revGeo_centroid = "reverse geocoding point";
+    // TODO: Leaflet requires the layer overlays to be added in incrementing z-order
+    //       If you want to reorder, you have to remove all and then add back (omg)
+    //       The ideal z-ordering is below (not implemented)
+    var options_default_geom_polygon = {color: geomColors.default, title: popup_text_default_geom_polygon};                     // zIndex: 100
+    var options_default_geom_point = {color: geomColors.default, title: popup_text_default_geom_point};                         // zIndex: 203
+    var options_math_centroid = {color: geomColors.geomCentroid, radius: 5, draggable: false, title: popup_text_math_centroid}; // zIndex: 200
+    var options_label_centroid = {color: geomColors.labelPoint, draggable: true, title: popup_text_label_centroid};             // zIndex: 202
+    var options_label_bbox = {color: geomColors.labelBbox, draggable: true, title: popup_text_label_bbox};                      // zIndex: 101
+    var options_revGeo_centroid = {color: geomColors.revgeoPoint, draggable: true, title: popup_text_revGeo_centroid};          // zIndex: 201
+    var z_offset_default_geom_polygon = 0;
+    var z_offset_default_geom_point = 3;
+    var z_offset_math_centroid = 0;
+    var z_offset_label_centroid = 2;
+    var z_offset_label_bbox = 1;
+    var z_offset_revGeo_centroid = 1;
+    
+    $("#geometries_section").collapse();
+    
+    function drawGeoms() {
+      count_circlemarker = 0;
+      count_polygon = 0;
+      count_rectangle = 0;
+      has_default_geom_polygon = false;
+      has_default_geom_point = false;
+      has_math_centroid = false;
+      has_label_centroid = false;
+      has_label_bbox = false;
+      has_revGeo_centroid = false;
 
-    var featureLayer = L.geoJSON(null, {
-        pointToLayer: function(pt, latlng) {
-            return L.circleMarker(latlng, {color: geomColors.default});
-        },
-        style: function(f) {
-            return {color: geomColors.default};
-        },
-    }).addTo(map);
-    featureLayer.addData({{ {"type":"Feature","geometry":wof_doc.geometry}|tojson }});
-    map.fitBounds(featureLayer.getBounds());
+      var featureLayer = L.geoJSON(null, {
+          pointToLayer: function(pt, latlng) {
+              has_default_geom_polygon = false;
+              has_default_geom_point = true;
+              return L.circleMarker(latlng, options_default_geom_point);
+          },
+          style: function(f) {
+              return options_default_geom_polygon;
+          },
+      }).addTo(drawnItems);
+      featureLayer.addData({{ {"type":"Feature","geometry":wof_doc.geometry}|tojson }});
+      featureLayer.bindPopup(popup_text_default_geom_point);
+      map.fitBounds(featureLayer.getBounds());
+      // TODO: This is more complicated, depending on Polygon or Point we'd update text, too
+      document.getElementById('geom_default').checked = true;
+      document.getElementById('geom_default_text').value = "{{ wof_doc.geometry['coordinates'] }}";
 
-    {% if wof_doc.properties['lbl:latitude'] is defined and wof_doc.properties['lbl:longitude'] is defined -%}
-    var labelPoint = L.latLng({{ wof_doc.properties['lbl:latitude']|float|tojson }}, {{ wof_doc.properties['lbl:longitude']|float|tojson }});
-    var labelPointLayer = L.circleMarker(labelPoint, {color: geomColors.labelPoint}).addTo(map);
-    {%- endif %}
+      // Only enable polygon drawing if the default geom is a point not a polygon
+      {% if wof_doc.geometry['type'] != 'Point' -%}
+      featureLayer.bindPopup(popup_text_default_geom_polygon);
+      count_polygon++;
+      enable_polygon = false;
+      has_default_geom_polygon = true;
+      has_default_geom_point = false;
+      {%- endif %}
 
-    {%- if wof_doc.properties['lbl:bbox'] is defined %}
-    {%- set bboxParts = wof_doc.properties['lbl:bbox'].split(",")|list -%}
-    var labelBbox = L.latLngBounds(
-        L.latLng({{ bboxParts[1] }}, {{ bboxParts[0] }}),
-        L.latLng({{ bboxParts[3] }}, {{ bboxParts[2] }}),
-    );
-    var labelBboxLayer = L.rectangle(labelBbox, {color: geomColors.labelBbox}).addTo(map);
-    {%- endif %}
+      {%- if wof_doc.properties['lbl:bbox'] is defined %}
+      {%- set bboxParts = wof_doc.properties['lbl:bbox'].split(",")|list -%}
+      var labelBbox = L.latLngBounds(
+          L.latLng({{ bboxParts[1] }}, {{ bboxParts[0] }}),
+          L.latLng({{ bboxParts[3] }}, {{ bboxParts[2] }}),
+      );
+      var labelBboxLayer = L.rectangle(labelBbox, options_label_bbox ).addTo(drawnItems);
+      map.fitBounds(featureLayer.getBounds().extend(labelBboxLayer.getBounds()));
+      // Point default geoms sometimes have a label bounding box that is larger, zoom out to it
+      labelBboxLayer.bindPopup(popup_text_label_bbox);
+      // Disable drawing rectangles if the label bounding box already exists
+      enable_rectangle = false;
+      count_rectangle++;
+      has_label_bbox = true;
+      {%- endif %}
+      document.getElementById('geom_label_bounding_box').checked = has_label_bbox;
+      document.getElementById('geom_label_bounding_box_text').value = "{{ wof_doc.properties['lbl:bbox'] }}";
 
-    {% if wof_doc.properties['reversegeo:latitude'] is defined and wof_doc.properties['reversegeo:longitude'] is defined -%}
-    var reverseGeo = L.latLng({{ wof_doc.properties['reversegeo:latitude']|float|tojson }}, {{ wof_doc.properties['reversegeo:longitude']|float|tojson }});
-    var reverseGeoLayer = L.circleMarker(reverseGeo, {color: geomColors.revgeoPoint}).addTo(map);
-    {%- endif %}
+      {% if wof_doc.properties['geom:latitude'] is defined and wof_doc.properties['geom:longitude'] is defined -%}
+      var geomCentroid = L.latLng({{ wof_doc.properties['geom:latitude']|float|tojson }}, {{ wof_doc.properties['geom:longitude']|float|tojson }});
+      var geomCentroidLayer = L.circleMarker(geomCentroid, options_math_centroid).addTo(drawnItems);
+      geomCentroidLayer.bindPopup(popup_text_math_centroid);
+      // Add the CircleMarker to the drawnItems FeatureGroup to enable editing
+      drawnItems.addLayer(geomCentroidLayer);
+      has_math_centroid = true;
+      document.getElementById('geom_math_centroid_text').value = "{{ wof_doc.properties['geom:longitude'] }}, {{ wof_doc.properties['geom:latitude'] }}";
+      {%- else %}
+      document.getElementById('geom_math_centroid_text').value = "";
+      {%- endif %}
+      document.getElementById('geom_math_centroid').checked = has_math_centroid;
 
-    {% if wof_doc.properties['geom:latitude'] is defined and wof_doc.properties['geom:longitude'] is defined -%}
-    var geomCentroid = L.latLng({{ wof_doc.properties['geom:latitude']|float|tojson }}, {{ wof_doc.properties['geom:longitude']|float|tojson }});
-    var geomCentroidLayer = L.circleMarker(geomCentroid, {color: geomColors.geomCentroid, radius: 5}).addTo(map);
-    {%- endif %}
+      {% if wof_doc.properties['lbl:latitude'] is defined and wof_doc.properties['lbl:longitude'] is defined -%}
+      var labelPoint = L.latLng({{ wof_doc.properties['lbl:latitude']|float|tojson }}, {{ wof_doc.properties['lbl:longitude']|float|tojson }});
+      var labelPointLayer = L.circleMarker(labelPoint, options_label_centroid).addTo(drawnItems);
+      labelPointLayer.bindPopup(popup_text_label_centroid);
+      // Add the CircleMarker to the drawnItems FeatureGroup to enable editing
+      drawnItems.addLayer(labelPointLayer);
+      count_circlemarker++;
+      has_label_centroid = true;
+      document.getElementById('geom_label_centroid_text').value = "{{ wof_doc.properties['lbl:longitude'] }}, {{ wof_doc.properties['lbl:latitude'] }}";
+      {%- else %}
+      document.getElementById('geom_label_centroid_text').value = "";
+      {%- endif %}
+      document.getElementById('geom_label_centroid').checked = has_label_centroid;
 
+      {% if wof_doc.properties['reversegeo:latitude'] is defined and wof_doc.properties['reversegeo:longitude'] is defined -%}
+      var reverseGeo = L.latLng({{ wof_doc.properties['reversegeo:latitude']|float|tojson }}, {{ wof_doc.properties['reversegeo:longitude']|float|tojson }});
+      var reverseGeoLayer = L.circleMarker(reverseGeo, options_revGeo_centroid).addTo(drawnItems);
+      reverseGeoLayer.bindPopup(popup_text_revGeo_centroid);
+      // Add the CircleMarker to the drawnItems FeatureGroup to enable editing
+      drawnItems.addLayer(reverseGeoLayer);
+      count_circlemarker++;
+      has_revGeo_centroid = true;
+      document.getElementById('geom_revgeo_centroid_text').value = "{{ wof_doc.properties['reversegeo:longitude'] }}, {{ wof_doc.properties['reversegeo:latitude'] }}";
+      {%- else %}
+      document.getElementById('geom_revgeo_centroid_text').value = "";
+      {%- endif %}
+      document.getElementById('geom_revgeo_centroid').checked = has_revGeo_centroid;
+
+      {% if wof_doc.properties['lbl:latitude'] is defined and wof_doc.properties['lbl:longitude'] is defined and wof_doc.properties['reversegeo:latitude'] is defined and wof_doc.properties['reversegeo:longitude'] is defined -%}
+      enable_circlemarker = false;
+      {%- endif %}
+    }
+    
+    drawGeoms();
+    
+    // Define a custom Leaflet control for the reset button
+    var ResetButton = L.Control.extend({
+      onAdd: function(map) {
+        var button = L.DomUtil.create('button', 'leaflet-control-reset');
+        button.innerHTML = 'Reset geometries';
+        button.title = 'Reset geometries';
+
+        L.DomEvent.on(button, 'click', function() {
+          drawnItems.clearLayers();
+          // Add your logic to restore earlier state if necessary
+          drawGeoms();
+          updateDrawOptions();
+        });
+
+        return button;
+      }
+    });
+
+    // Create an instance of the custom control and add it to the map
+    new ResetButton({ position: 'topright' }).addTo(map);
+
+    // add Leaflet-Geoman controls with some options to the map
+    function addDrawControls() {
+      var drawControl = map.pm.addControls({  
+        position: 'topright',  
+        drawPolyline: false,    // Remove line drawing option
+        drawCircle: false,
+        drawMarker: false,
+        drawText: false,
+        cutPolygon: false,
+        drawCircleMarker: enable_circlemarker,
+        drawPolygon: enable_polygon,
+        drawRectangle: enable_rectangle
+      });
+    }
+    
+    function updateDrawOptions() {
+      map.pm.disableDraw();
+      if( count_circlemarker >= 2 ) {
+        enable_circlemarker = false;
+      } else {
+        enable_circlemarker = true;
+      }
+      if( count_polygon >= 1 ) {
+        enable_polygon = false;
+      } else {
+        enable_polygon = true;
+      }
+      if( count_rectangle >= 1 ) {
+        enable_rectangle = false;
+      } else {
+        enable_rectangle = true;
+      }
+      map.pm.removeControls();
+      addDrawControls();
+    }
+
+    updateDrawOptions();
+    
+    map.on('pm:create', function (e) {
+      var layer = e.layer;
+      var shape = e.shape;
+      
+      if (shape == 'CircleMarker') {
+        if (count_circlemarker>=2) {
+          map.removeLayer(layer);
+          return;
+        }
+        circleMarkerAdded = true;
+        count_circlemarker++;
+        updateDrawOptions();
+
+        var labelPrompt = document.createElement('div');
+        labelPrompt.innerHTML = `
+          <p><b>Select the label type:</b></p>
+        `;
+        if( !has_label_centroid ) {
+          // (nvkelso 20240329: whitespace in value + popup_text var is meaningful)
+          labelPrompt.innerHTML += `
+            <input type="radio" id="label" name="labelType" value="` + popup_text_label_centroid + `">
+            <label for="label">Label Centroid</label><br>
+          `;
+        }
+        if( !has_revGeo_centroid ) {
+          labelPrompt.innerHTML += `
+            <input type="radio" id="reverse" name="labelType" value="` + popup_text_revGeo_centroid + `">
+            <label for="reverse">Reverse Geocoding Centroid</label><br>
+          `;
+        }
+        labelPrompt.innerHTML += `
+        <button id="submitLabelType">Submit</button>
+        `;
+
+        L.DomEvent.disableClickPropagation(labelPrompt);
+
+        L.DomEvent.on(labelPrompt, 'click', function (e) {
+          if (e.target.id === 'submitLabelType') {
+            var selectedRadio = labelPrompt.querySelector('input[name="labelType"]:checked');
+            if (selectedRadio) {
+              labelType = selectedRadio.value;
+              
+              switch( labelType ) {
+                case popup_text_label_centroid: 
+                  has_label_centroid = true;
+                  layer.setStyle( options_label_centroid );
+                  document.getElementById('geom_label_centroid').checked = true;
+                  document.getElementById('geom_label_centroid').disabled = false;
+                  document.getElementById('geom_label_centroid_text').value = `${layer.getLatLng().lng.toFixed(6)},${layer.getLatLng().lat.toFixed(6)}`;
+                  break;
+                case popup_text_revGeo_centroid: 
+                  has_revGeo_centroid = true;
+                  layer.setStyle(options_revGeo_centroid);
+                  document.getElementById('geom_revgeo_centroid').checked = true;
+                  document.getElementById('geom_revgeo_centroid').disabled = false;
+                  document.getElementById('geom_revgeo_centroid_text').value = `${layer.getLatLng().lng.toFixed(6)},${layer.getLatLng().lat.toFixed(6)}`;
+                  break;
+                default:
+                  //console.log( labelType );
+                  break;
+              }
+              
+              layer.title = labelType;
+              layer.bindPopup(labelType);
+
+              // TODO: Should block adding new circlemarkers until the dialog is submitted
+              // TODO: Something here blocks editing of the added layer?
+              drawnItems.addLayer(layer);
+              map.removeControl(labelPrompt);
+            } else {
+              alert('Please select a label type.');
+            }
+          }
+        });
+
+        labelPrompt.style.position = 'absolute'; // Set position to absolute
+        labelPrompt.style.top = '10px'; // Adjust top position
+        labelPrompt.style.left = '10px'; // Adjust left position
+        labelPrompt.style.zIndex = 1000; // Set higher z-index
+        labelPrompt.style.backgroundColor = 'white'; // Set background color
+        labelPrompt.style.border = '2px solid black'; // Set border
+        labelPrompt.style.padding = '10px'; // Add padding
+      
+        map.getContainer().appendChild(labelPrompt);
+      } else if (shape == 'Rectangle') {
+        // (nvkelso 20240329: Test Rectangle before Polygon because of Leaflet bug)
+        layer.setStyle( options_label_bbox );
+        layer.title = popup_text_label_bbox;
+        layer.bindPopup(popup_text_label_bbox);
+        document.getElementById('geom_label_bounding_box').checked = true;
+        document.getElementById('geom_label_bounding_box').disabled = false;
+        count_rectangle++;
+        has_label_bbox = true;
+        updateDrawOptions();
+        // needs to be after GUI setting
+        document.getElementById('geom_label_bounding_box_text').value = `${layer.getBounds().getWest().toFixed(6)},${layer.getBounds().getSouth().toFixed(6)},${layer.getBounds().getEast().toFixed(6)},${layer.getBounds().getNorth().toFixed(6)}`;
+        drawnItems.addLayer(layer);
+      } else if (shape == 'Polygon') {
+        layer.setStyle( options_default_geom_polygon );
+        layer.title = popup_text_default_geom_polygon;
+        layer.bindPopup(popup_text_default_geom_polygon);
+        document.getElementById('geom_default').checked = true;
+        count_polygon++;
+        has_default_geom_polygon = true;
+        has_default_geom_point = false;
+        updateDrawOptions();
+        // needs to be after GUI setting
+        document.getElementById('geom_default_text').value = JSON.stringify(layer.toGeoJSON()["geometry"]["coordinates"]);
+        // TODO: Will require moving the old default point geom to an alt (with new file), and source tracking
+        drawnItems.addLayer(layer);
+      }
+    });
+    
+    function removeLayer(whichLayer) {
+        // Loop through each layer on the map
+        map.eachLayer(function(layer) {
+            // Check if the layer has a 'title' property and if it is equal to "foo"
+            if (layer.options && layer.options.title === whichLayer) {
+                // Remove the layer from the map
+                map.removeLayer(layer);
+            }
+        });
+    }
+    
+    function updateLayer(whichLayer) {
+        if( whichLayer == popup_text_label_centroid || whichLayer == popup_text_revGeo_centroid) {
+          if( whichLayer == popup_text_label_centroid ) {
+            var inputLocation = document.getElementById('geom_label_centroid_text').value;
+          } else if( whichLayer == popup_text_revGeo_centroid ) {
+            var inputLocation = document.getElementById('geom_revgeo_centroid_text').value;
+          }
+        
+          // Split the input value on comma and parse latitude and longitude as floats
+          var newLocationArray = inputLocation.split(',');
+          var newLat = parseFloat(newLocationArray[1]);
+          var newLng = parseFloat(newLocationArray[0]);
+       
+          // Loop through each layer on the map
+          map.eachLayer(function(layer) {
+              if (layer.options && layer.options.title === whichLayer) {
+                  layer.setLatLng([newLat, newLng]);
+              }
+          });
+        } else if( whichLayer == popup_text_label_bbox ) {
+          var inputLocation = document.getElementById('geom_label_bounding_box_text').value;
+
+          // Split the input value on comma and parse latitude and longitude as floats
+          var bboxParts = inputLocation.split(',');
+          
+          var labelBbox2 = L.latLngBounds(
+              L.latLng(parseFloat(bboxParts[1]), parseFloat(bboxParts[0])),
+              L.latLng(parseFloat(bboxParts[3]), parseFloat(bboxParts[2]))
+          );
+       
+          // Loop through each layer on the map
+          map.eachLayer(function(layer) {
+              if (layer.options && layer.options.title === whichLayer) {
+                  layer.setBounds(labelBbox2);
+              }
+          });
+        }
+    }
+
+    // This happens on "save" of the editing session
+    map.on('pm:edit', function (e) {
+      var layers = e.layers;
+      layers.eachLayer(function (layer) {
+        if (layer.options && layer.options.title) {
+          console.log("Edited layer title:", layer.options.title);
+        }
+      });
+    });
+    
     $("input.wof-input").on("change", function() {
         checkValid($(this));
+    });
+    
+    $("#geom_label_centroid").on("change", function(event) {
+        event.target.disabled = true;
+        document.getElementById('geom_label_centroid_text').value = '';
+        count_circlemarker--;
+        has_label_centroid = false;
+        updateDrawOptions();
+        removeLayer(popup_text_label_centroid);
+    });
+    $("#geom_label_centroid_text").on("change", function(event) {
+        updateLayer(popup_text_label_centroid);
+    });
+    $("#geom_label_bounding_box").on("change", function(event) {
+        event.target.disabled = true;
+        document.getElementById('geom_label_bounding_box_text').value = '';
+        count_rectangle--;
+        has_label_bbox = false;
+        updateDrawOptions();
+        removeLayer(popup_text_label_bbox);
+    });
+    $("#geom_label_bounding_box_text").on("change", function(event) {
+        updateLayer(popup_text_label_bbox);
+    });
+    $("#geom_revgeo_centroid").on("change", function(event) {
+        event.target.disabled = true;
+        document.getElementById('geom_revgeo_centroid_text').value = '';
+        count_circlemarker--;
+        has_revGeo_centroid = false;
+        updateDrawOptions();
+        removeLayer(popup_text_revGeo_centroid);
+    });
+    $("#geom_revgeo_centroid_text").on("change", function(event) {
+        updateLayer(popup_text_revGeo_centroid);
+    });
+    
+    // Add event listener to modify label_centroid when a marker is deleted
+    map.on('pm:update', function (e) {
+      console.log(e);
+      var layers = e.layers;
+      layers.eachLayer(function (layer) {
+        if (layer instanceof L.CircleMarker) {
+          label_centroid = false;
+          count_circlemarker--;
+        }
+        if (layer.options && layer.options.title) {
+          console.log("Finished deleting layer title:", layer.options.title);
+        
+          switch( layer.options.title ) {
+            case popup_text_label_centroid: 
+              has_label_centroid = false;
+              // TODO: Add setting of WOF geometry
+              break;
+            case popup_text_revGeo_centroid: 
+              has_revGeo_centroid = false;
+              // TODO: Add setting of WOF geometry
+              break;
+            case popup_text_label_bbox: 
+              has_label_bbox = false;
+              // TODO: Add setting of WOF geometry
+              break;
+            case popup_text_default_geom_polygon: 
+            case popup_text_default_geom_point: 
+            case popup_text_math_centroid: 
+              // TODO: these should warn and the geom restored (and not removed from database)
+              console.log("Ooops, this layer shouldn't be deleted:", layer.options.title);
+              break;
+            default:
+              break;
+          }
+        }
+        updateDrawOptions();
+      });
     });
 
     // Add dropdown list for languages
     $('input.wof-input[name="wof:lang_x_spoken"]').tagify({
-        whitelist: {{ lang_expansion.keys()|list|tojson }},
+        allowlist: {{ lang_expansion.keys()|list|tojson }},
     });
     $('input.wof-input[name="wof:lang_x_official"]').tagify({
-        whitelist: {{ lang_expansion.keys()|list|tojson }},
+        allowlist: {{ lang_expansion.keys()|list|tojson }},
     });
     $('input.wof-input[name="wof:placetype_alt"]').tagify();
     $(".use-tagify").tagify({delimiters: null});
 
     // Set up a filter to pick which languages to show
     $("#alternate-names-selected").tagify({
-        whitelist: {{ localized_names_tagify_whitelist|tojson }},
+        allowlist: {{ localized_names_tagify_allowlist|tojson }},
     }).on("add", function(e, tag) {
         var lang = tag.data.lang || tag.data.value;
         var existing = $(".localized-names-row[data-lang=\"" + lang + "\"]").first()
@@ -148,7 +598,7 @@ $(document).ready(function() {
 
     // Set up a filter to pick which languages to show
     $("#localized-labels-selected").tagify({
-        whitelist: {{ localized_labels_tagify_whitelist|tojson }},
+        allowlist: {{ localized_labels_tagify_allowlist|tojson }},
     }).on("add", function(e, tag) {
         var lang = tag.data.lang || tag.data.value;
         var existing = $(".localized-labels-row[data-lang=\"" + lang + "\"]").first()
@@ -174,6 +624,16 @@ $(document).ready(function() {
 
     // Default to showing English only
     $("#localized-labels-selected").data("tagify").addTags([{"lang": "eng", "value": "English (eng)"}]);
+
+    // // Toggle show/hide of geometries section
+//     $("#show-hide-geoms").on("click", function(e) {
+//       var x = document.getElementById("geometries_section");
+//       if (x.style.display === "none") {
+//         x.style.display = "block";
+//       } else {
+//         x.style.display = "none";
+//       }
+//     });
 
     // Perform validation before submitting form
     $("button[name=\"next-step\"]").on("click", function(e) {
@@ -212,6 +672,81 @@ $(document).ready(function() {
 </div>
 
 <form class="needs-validation" novalidate action="{{ url_for('place.edit_place', url=wof_url) }}" method="POST">
+    <h4>Geometries</h4>
+    <!-- TODO: This doesn't show/hide -->
+    <!-- <button id="show-hide-geoms" class="btn btn-secondary">Hide geometries</button> -->
+    <div id="geometries_section" class="geometries_section">
+      <div class="form-group">
+          <input type="checkbox" id="geom_default" name="geom_default" value="Default geom" disabled=True checked=True>
+          {%- if wof_doc.properties['geom:area_square_m'] is defined %}
+          <label for="geom_default">Default geometry</label>&nbsp;<small>({{ wof_doc.geometry['type'] }} <code>geometry["coordinates"]</code> sourced from <code>{{ wof_doc.properties['src:geom'] }}</code> is {{ wof_doc.properties['geom:area_square_m']|int }} square meters)</small>
+          {%- else %}
+          <label for="geom_default">Default geometry</label>&nbsp;<small>({{ wof_doc.geometry['type'] }} <code>geometry["coordinates"]</code> sourced from <code>{{ wof_doc.properties['src:geom'] }}</code>)</small>
+          {%- endif %}
+          <input type="input" id="geom_default_text" name="geom:coordinates" value="" class="form-control wof-input">
+          <small id="wof-name-help" class="form-text text-muted">Land-only multi-polygons are preferred, points are allowed. If water is included, please add a land-based reverse geocoding centroid.</small>
+      </div>
+      <div class="form-group">
+          {%- if wof_doc.properties['src:geom_alt'] is defined %}
+          <input type="checkbox" id="geom_alternates" name="geom_alternates" value="Alternate geometries" disabled=True checked=True>
+          <label for="geom_default">Alternate geometries</label>&nbsp;<small>(<code>src:geom_alt</code>)</small>
+          <small id="wof-name-help" class="form-text text-muted">Alternate geometries are present from the following {{ wof_doc.properties['src:geom_alt']|length }} sources:</small>
+          {%- for alt_geom in wof_doc.properties['src:geom_alt'] %}
+          <ul class="form-text text-muted">
+              <li><code>{{ alt_geom }}</code></li>
+          </ul>
+          {%- endfor %}
+          {%- else %}
+          <input type="checkbox" id="geom_alternates" name="geom_alternates" value="Alternate geometries" disabled=True>
+          <label for="geom_default">Alternate geometries</label>&nbsp;<small>(<code>src:geom_alt</code>)</small>
+          <small id="wof-name-help" class="form-text text-muted">Alternate geometries are allowed (none present).</small>
+          {%- endif %}
+      </div>
+      <div class="form-group">
+          {% if wof_doc.properties['geom:latitude'] is defined and wof_doc.properties['geom:longitude'] is defined -%}
+          <input type="checkbox" id="geom_math_centroid" name="geom_math_centroid" value="Geometric centroid" disabled=True checked=True>
+          {%- else %}
+          <input type="checkbox" id="geom_math_centroid" name="geom_math_centroid" value="Geometric centroid" disabled=True>
+          {%- endif %}
+          <label for="geom_math_centroid">Math centroid</label>&nbsp;<small>(<code>geom:longitude</code>, <code>geom:latitude</code>)</small>
+          <input disabled type="input" id="geom_math_centroid_text" name="geom:centroid" value="" class="form-control wof-input">
+          <small id="wof-name-help" class="form-text text-muted">The location of a feature's geometric centroid (can be off the surface). Machine generated.</small>
+      </div>
+      <div class="form-group">
+          {% if wof_doc.properties['lbl:latitude'] is defined and wof_doc.properties['lbl:longitude'] is defined -%}
+          <input type="checkbox" id="geom_label_centroid" name="geom_label_centroid" value="Label centroid" checked=True>
+          <label for="geom_label_centroid">Label centroid</label>&nbsp;<small>(<code>lbl:longitude</code>, <code>lbl:latitude</code>)</small>
+          {%- else %}
+          <input type="checkbox" id="geom_label_centroid" name="geom_label_centroid" value="Label centroid" disabled=True>
+          <label for="geom_label_centroid">Label centroid</label>&nbsp;<small>(<code>lbl:longitude</code>, <code>lbl:latitude</code>)</small>
+          {%- endif %}
+          <input type="input" id="geom_label_centroid_text" name="lbl:centroid" value="" class="form-control wof-input" data-wof-validation-regex="^([-+]?[0-9]*\.?\d+),\s*([-+]?[0-9]*\.?\d+)$">
+          <small id="wof-name-help" class="form-text text-muted">The coordinate that specifies a label's east-west position (longitude) and north–south position (latitude). Human-generated or derived from mapshaper.</small>
+      </div>
+      <div class="form-group">
+          {%- if wof_doc.properties['lbl:bbox'] is defined %}
+          <input type="checkbox" id="geom_label_bounding_box" name="geom_label_bounding_box" value="Label bounding box" checked=True>
+          {%- else %}
+          <input type="checkbox" id="geom_label_bounding_box" name="geom_label_bounding_box" value="Label bounding box" disabled=True>
+          {%- endif %}
+          <label for="geom_label_bounding_box">Label bounding box</label>&nbsp;<small>(<code>lbl:bbox</code>)</small>
+          <input type="input" id="geom_label_bounding_box_text" name="lbl:bbox" value="{{ wof_doc.properties['lbl:bbox'] }}" class="form-control wof-input" data-wof-validation-regex="^([-+]?[0-9]*\.?\d+),\s*([-+]?[0-9]*\.?\d+),\s*([-+]?[0-9]*\.?\d+),\s*([-+]?[0-9]*\.?\d+)$">
+          <small id="wof-name-help" class="form-text text-muted">Used for map viewports and search. Usually smaller than the geom:bbox for polygons but larger for points. Human-generated.</small>
+      </div>
+      <div class="form-group">
+          {% if wof_doc.properties['reversegeo:latitude'] is defined and wof_doc.properties['reversegeo:longitude'] is defined -%}
+          <input type="checkbox" id="geom_revgeo_centroid" name="geom_revgeo_centroid" value="Reverse geocoding centroid" checked=True>
+          <label for="geom_label_centroid">Reverse geocoding centroid</label>&nbsp;<small>(<code>reversegeo:longitude</code>, <code>reversegeo:latitude</code>)</small>
+          {%- else %}
+          <input type="checkbox" id="geom_revgeo_centroid" name="geom_revgeo_centroid" value="Reverse geocoding centroid" disabled=True>
+          <label for="geom_label_centroid">Reverse geocoding centroid</label>&nbsp;<small>(<code>reversegeo:longitude</code>, <code>reversegeo:latitude</code>)</small>
+          {%- endif %}
+          <input type="input" id="geom_revgeo_centroid_text" name="reversegeo:centroid" value="" class="form-control wof-input" data-wof-validation-regex="^([-+]?[0-9]*\.?\d+),\s*([-+]?[0-9]*\.?\d+)$">
+          <small id="wof-name-help" class="form-text text-muted">Represents the centroid to use when reverse geocoding a record to establish the parent hierarchy, preferably on land. Typically derived from mapshaper.</small>
+      </div>
+    </div>
+
+    <h4>Common properties</h4>
     <!-- https://github.com/whosonfirst/whosonfirst-properties/blob/master/properties/wof/name.json -->
     <div class="form-group">
         <label for="wof-name">Name</label>&nbsp;<small>(<code>wof:name</code>)</small>
@@ -244,7 +779,7 @@ $(document).ready(function() {
     </div>
     <!-- https://github.com/whosonfirst/whosonfirst-properties/blob/master/properties/mz/is_funky.json -->
     <div class="form-group">
-        <label for="mz-is_funky">Disabled</label>&nbsp;<small>(<code>mz:is_funky</code>)</small>
+        <label for="mz-is_funky">Disabled</label>&nbsp;<small>(<code>mz:is_funky</code>)</small> 
         <input type="text" class="form-control wof-input" name="mz:is_funky" data-wof-validation-regex="^(-1|0|1)$" value="{{ wof_doc.properties['mz:is_funky'] }}">
         <small id="mz-is_funky-help" class="form-text text-muted">Used when Mapzen suspects the record is bad or inappropriate but additional confirmation is needed before the feature is deprecated. Records with a 1 value are recommended to be hidden from map display and search unless explicitly asked for by name.</small>
     </div>
